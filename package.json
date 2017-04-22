@@ -1,0 +1,22 @@
+{
+  "name": "game-combinator",
+  "version": "1.0.0",
+  "description": "Combine games into one",
+  "author": "ABA",
+  "license": "MIT",
+  "scripts": {
+    "wds": "webpack-dev-server --inline",
+    "build": "webpack"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.63",
+    "awesome-typescript-loader": "^3.1.2",
+    "glob": "^7.1.1",
+    "typescript": "^2.2.2",
+    "webpack": "^2.4.1",
+    "webpack-dev-server": "^2.4.2"
+  },
+  "dependencies": {
+    "lodash": "^4.17.4"
+  }
+}

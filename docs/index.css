@@ -1,0 +1,21 @@
+body {
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: white;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;    
+  background: white;
+  color: #eee;
+  text-align: center;
+}
+
+canvas#main {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);  
+  width: 80vmin;
+  height: 80vmin;
+  background: white;
+}
