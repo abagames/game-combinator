@@ -1,4 +1,25 @@
 (game fire
   (actor stage
+    (if initial (spawn player))
+    (if (random rarely) (spawn item))
+  )
+  (actor player
+    (if initial (place bottom_left))
+    (if (key left) (move left))
+    (if (key right) (move right))
+    (if (touch out_of_screen) (move step_back))
+  )
+  (actor item
+    (if initial
+      (place top_left)
+      (accelerate right normal)
+    )
+    (accelerate down slow)
+    (if (touch player) (accelerate bounce_vertical))
+    (if (touch out_of_screen_bottom) miss)
+    (if (touch out_of_screen_right)
+      score
+      remove
+    )
   )
 )

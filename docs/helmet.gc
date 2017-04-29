@@ -1,0 +1,22 @@
+(game helmet
+  (actor stage
+    (if initial (spawn player))
+    (if (random often) (spawn item))
+  )
+  (actor player
+    (if initial (place bottom_left))
+    (if (key left) (move left))
+    (if (key right) (move right))
+    (if (touch out_of_screen_right)
+      score
+      (place bottom_left)
+    )
+    (if (touch out_of_screen) (move step_back))
+  )
+  (actor item
+    (if initial (place top))
+    (accelerate down slow)
+    (if (touch player) miss)
+    (if (touch out_of_screen) remove)
+  )
+)
