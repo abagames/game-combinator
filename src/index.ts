@@ -1,12 +1,15 @@
 import * as parseSE from 's-expression';
+import * as _ from 'lodash';
+import Actor from './Actor';
 
 window.onload = init;
 
-const codeCount = 1;
+const codeCount = 2;
 const codes = [];
 
 function init() {
   loadCode('fire.gc');
+  loadCode('helmet.gc');
 }
 
 function loadCode(name: string) {
@@ -14,7 +17,13 @@ function loadCode(name: string) {
   request.open('GET', name);
   request.send();
   request.onload = () => {
-    codes.push(parseSE(request.responseText));
+    const parsed = parseSE(request.responseText);
+    if (parsed instanceof Error) {
+      const err: any = parsed;
+      console.error(`${err} line: ${err.line} col: ${err.col} (${name})`);
+      return;
+    }
+    codes.push(parsed);
     if (codes.length >= codeCount) {
       start();
     }
@@ -22,5 +31,49 @@ function loadCode(name: string) {
 }
 
 function start() {
-  console.log(codes[0]);
+  _.times(10, () => combine());
+  createActorCodes();
+}
+
+function createActorCodes() {
+  const code = codes[0];
+  code.splice(0, 2); // Remove 'game', [name]
+  const actorNames = ['stage', 'player', 'item'];
+  Actor.codes = {};
+  _.forEach(code, ac => {
+    const name = ac[1];
+    if (_.some(actorNames, an => an === name)) {
+      ac.splice(0, 2); // Remove 'actor', [name]
+      Actor.codes[name] = ac;
+    }
+  });
+  new Actor('stage');
+}
+
+function combine() {
+  const ci = Math.floor(Math.random() * 2);
+  const p1 = getCodePart(codes[ci]);
+  const p2 = getCodePart(codes[(ci + 1) % 2]);
+  p1.parent.splice(p1.index, 0, p2.parent[p2.index]);
+  p2.parent.splice(p2.index, 1);
+}
+
+function getCodePart(code: any[], targetDepth = 1, depth = 0) {
+  let ci = Math.floor(Math.random() * code.length);
+  let part;
+  for (let i = 0; i < code.length; i++) {
+    part = code[ci];
+    if (part instanceof Array) {
+      break;
+    }
+    ci++;
+    if (ci >= code.length) {
+      ci = 0;
+    }
+  }
+  if (!(part instanceof Array) ||
+    depth >= targetDepth && Math.random() > 0.5) {
+    return { parent: code, index: ci };
+  }
+  return getCodePart(part, targetDepth, depth + 1);
 }
