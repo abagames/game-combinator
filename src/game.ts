@@ -2,6 +2,7 @@ import Actor from './actor';
 import Screen from './screen';
 
 export default class Game {
+  maxActorCount = 100;
   actors: Actor[] = [];
   codes: any = {};
   ticks = -1;
@@ -11,8 +12,11 @@ export default class Game {
   }
 
   addActor(name: string) {
+    if (this.actors.length >= this.maxActorCount) {
+      return;
+    }
     if (!this.codes.hasOwnProperty(name)) {
-      console.error(`Actor '${name}' is not defined`);
+      //console.log(`Actor '${name}' is not defined`);
       return;
     }
     this.actors.push(new Actor(name, this.codes[name], this));

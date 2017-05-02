@@ -40,7 +40,9 @@ function loadCode(name: string) {
 }
 
 function start() {
-  //_.times(10, () => combine());
+  _.times(10, () => {
+    combine()
+  });
   game = new Game(new Screen(), isKeyDown);
   createActorCodes();
   update();
@@ -52,7 +54,8 @@ function update() {
 }
 
 function createActorCodes() {
-  const code = codes[0];
+  const code = codes[Math.floor(Math.random() * codes.length)];
+  console.log(JSON.stringify(_.cloneDeep(code), null, 2));
   code.splice(0, 2); // Remove 'game', [name]
   const actorNames = ['stage', 'player', 'item'];
   _.forEach(code, ac => {
@@ -69,8 +72,12 @@ function combine() {
   const ci = Math.floor(Math.random() * 2);
   const p1 = getCodePart(codes[ci]);
   const p2 = getCodePart(codes[(ci + 1) % 2]);
-  p1.parent.splice(p1.index, 0, p2.parent[p2.index]);
+  p1.parent.splice(p1.index, 0, _.cloneDeep(p2.parent[p2.index]));
   p2.parent.splice(p2.index, 1);
+  /*let cp1 = _.cloneDeep(p1.parent[p1.index]);
+  let cp2 = _.cloneDeep(p2.parent[p2.index]);
+  p1.parent[p1.index] = cp2;
+  p2.parent[p2.index] = cp1;*/
 }
 
 function getCodePart(code: any[], targetDepth = 1, depth = 0) {

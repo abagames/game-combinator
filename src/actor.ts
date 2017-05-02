@@ -57,9 +57,6 @@ export default class Actor {
     this.vel.x *= 0.99;
     this.vel.y *= 0.99;
     this.screen.setPoint(this.pos.x, this.pos.y, this.color);
-    /*if (this.name === 'item') { //&& this.isInitial) {
-      console.log(this);
-    }*/
     this.isInitial = false;
   }
 
@@ -68,7 +65,7 @@ export default class Actor {
   }
 
   parse(currentCode: any, stack: any[] = []) {
-    if (currentCode == null) {
+    if (currentCode == null || stack.length > 10) {
       return this.resultValue;
     }
     if (!(currentCode instanceof Array)) {
@@ -81,7 +78,6 @@ export default class Actor {
       return this.parse(stack.pop(), stack);
     }
     const c = currentCode.shift();
-    //if (this.name === 'item') console.log(c);
     if (c instanceof Array) {
       stack.push(currentCode);
       return this.parse(c, stack);
