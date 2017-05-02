@@ -1,13 +1,22 @@
 import * as parseSE from 's-expression';
 import * as _ from 'lodash';
-import Actor from './Actor';
+import Game from './game';
+import Screen from './screen';
 
 window.onload = init;
 
 const codeCount = 2;
 const codes = [];
+let isKeyDown = _.times(256, () => false);
+let game: Game;
 
 function init() {
+  document.onkeydown = e => {
+    isKeyDown[e.keyCode] = true;
+  };
+  document.onkeyup = e => {
+    isKeyDown[e.keyCode] = false;
+  };
   loadCode('fire.gc');
   loadCode('helmet.gc');
 }
@@ -31,23 +40,29 @@ function loadCode(name: string) {
 }
 
 function start() {
-  _.times(10, () => combine());
+  //_.times(10, () => combine());
+  game = new Game(new Screen(), isKeyDown);
   createActorCodes();
+  update();
+}
+
+function update() {
+  requestAnimationFrame(update);
+  game.update();
 }
 
 function createActorCodes() {
   const code = codes[0];
   code.splice(0, 2); // Remove 'game', [name]
   const actorNames = ['stage', 'player', 'item'];
-  Actor.codes = {};
   _.forEach(code, ac => {
     const name = ac[1];
     if (_.some(actorNames, an => an === name)) {
       ac.splice(0, 2); // Remove 'actor', [name]
-      Actor.codes[name] = ac;
+      game.codes[name] = ac;
     }
   });
-  new Actor('stage');
+  game.addActor('stage');
 }
 
 function combine() {
