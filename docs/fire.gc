@@ -12,14 +12,14 @@
   (actor item
     (if initial
       (place top_left)
-      (accelerate right normal)
+      (accelerate right slow)
     )
-    (accelerate down slow)
+    (accelerate down normal)
     (if (touch player) (accelerate bounce_vertical))
     (if (touch out_of_screen_bottom) miss)
-    (if (touch out_of_screen_right)
+    (if (touch out_of_screen_right) (
       score
       remove
-    )
+    ))
   )
 )
