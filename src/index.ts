@@ -5,7 +5,9 @@ import Screen from './screen';
 
 window.onload = init;
 
-const codeCount = 2;
+const baseCodeCount = 2;
+const baseCodes = [];
+const codeCount = 100;
 const codes = [];
 let isKeyDown = _.times(256, () => false);
 let game: Game;
@@ -32,46 +34,76 @@ function loadCode(name: string) {
       console.error(`${err} line: ${err.line} col: ${err.col} (${name})`);
       return;
     }
-    codes.push(parsed);
-    if (codes.length >= codeCount) {
+    baseCodes.push(parsed);
+    if (baseCodes.length >= baseCodeCount) {
       start();
     }
   };
 }
 
 function start() {
-  _.times(10, () => {
+  _.times(codeCount, i => {
+    codes.push(_.cloneDeep(baseCodes[i % baseCodeCount]));
+  });
+  _.times(codeCount * 10, () => {
     combine()
   });
+  const sortedCodes = sortCodes();
+  console.log(JSON.stringify(_.cloneDeep(sortedCodes[0].code), null, 2));
+  console.log(sortedCodes[0].score);
   game = new Game(new Screen(), isKeyDown);
-  createActorCodes();
+  beginGame(sortedCodes[0].code, game);
   update();
 }
 
-function update() {
-  requestAnimationFrame(update);
-  game.update();
+function sortCodes() {
+  const scoredCodes = _.map(codes, code => {
+    const score = addScoreToCode(code);
+    return { code, score };
+  });
+  return _(scoredCodes).sortBy('score').reverse().value();
 }
 
-function createActorCodes() {
-  const code = codes[Math.floor(Math.random() * codes.length)];
-  console.log(JSON.stringify(_.cloneDeep(code), null, 2));
-  code.splice(0, 2); // Remove 'game', [name]
-  const actorNames = ['stage', 'player', 'item'];
-  _.forEach(code, ac => {
-    const name = ac[1];
-    if (_.some(actorNames, an => an === name)) {
-      ac.splice(0, 2); // Remove 'actor', [name]
-      game.codes[name] = ac;
+function addScoreToCode(code) {
+  const screen = new Screen(null);
+  const game = new Game(screen, null);
+  beginGame(code, game);
+  let existsPlayer = false;
+  let existsItem = false;
+  for (let i = 0; i < 60; i++) {
+    game.update();
+    if (!game.isValid) {
+      existsPlayer = existsItem = false;
+      break;
     }
-  });
-  game.addActor('stage');
+    if (i > 30) {
+      _.forEach(game.actors, a => {
+        if (a.name === 'player' && isInScreen(a.pos, screen)) {
+          existsPlayer = true;
+        }
+        if (a.name === 'item' && isInScreen(a.pos, screen)) {
+          existsItem = true;
+        }
+      });
+    }
+  }
+  let score = 0;
+  if (existsPlayer) {
+    score += 2;
+  }
+  if (existsItem) {
+    score++;
+  }
+  return score;
+}
+
+function isInScreen(p, screen: Screen) {
+  return (p.x >= 0 && p.x < screen.width && p.y >= 0 && p.y < screen.height);
 }
 
 function combine() {
-  const ci = Math.floor(Math.random() * 2);
-  const p1 = getCodePart(codes[ci]);
-  const p2 = getCodePart(codes[(ci + 1) % 2]);
+  const p1 = getCodePart(codes[Math.floor(Math.random() * codeCount)]);
+  const p2 = getCodePart(codes[Math.floor(Math.random() * codeCount)]);
   p1.parent.splice(p1.index, 0, _.cloneDeep(p2.parent[p2.index]));
   p2.parent.splice(p2.index, 1);
   /*let cp1 = _.cloneDeep(p1.parent[p1.index]);
@@ -98,4 +130,23 @@ function getCodePart(code: any[], targetDepth = 1, depth = 0) {
     return { parent: code, index: ci };
   }
   return getCodePart(part, targetDepth, depth + 1);
+}
+
+function beginGame(gameCode: any, game: Game) {
+  const code = _.cloneDeep(gameCode);
+  code.splice(0, 2); // Remove 'game', [name]
+  const actorNames = ['stage', 'player', 'item'];
+  _.forEach(code, ac => {
+    const name = ac[1];
+    if (_.some(actorNames, an => an === name)) {
+      ac.splice(0, 2); // Remove 'actor', [name]
+      game.codes[name] = ac;
+    }
+  });
+  game.addActor('stage');
+}
+
+function update() {
+  requestAnimationFrame(update);
+  game.update();
 }

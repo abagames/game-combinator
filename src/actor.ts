@@ -11,6 +11,7 @@ export default class Actor {
   resultValue: any;
   isAlive = true;
   color = '#fff';
+  parseCount = 0;
   freqNamePatterns = {
     'rarely': 0.05,
     'often': 0.1,
@@ -51,6 +52,7 @@ export default class Actor {
 
   update() {
     this.prevPos.set(this.pos);
+    this.parseCount = 0;
     this.parse(_.cloneDeep(this.code));
     this.pos.x += this.vel.x;
     this.pos.y += this.vel.y;
@@ -64,116 +66,129 @@ export default class Actor {
     this.isAlive = false;
   }
 
-  parse(currentCode: any, stack: any[] = []) {
-    if (currentCode == null || stack.length > 10) {
+  parse(currentCode: any) {
+    const stack = [];
+    this.parseCount++;
+    if (this.parseCount > 48) {
+      this.game.isValid = false;
       return this.resultValue;
     }
-    if (!(currentCode instanceof Array)) {
-      currentCode = [currentCode];
+    if (currentCode == null) {
+      return this.resultValue;
     }
-    if (currentCode.length <= 0) {
-      if (stack.length <= 0) {
-        return this.resultValue;
+    for (let i = 0; i < 32; i++) {
+      if (!(currentCode instanceof Array)) {
+        currentCode = [currentCode];
       }
-      return this.parse(stack.pop(), stack);
-    }
-    const c = currentCode.shift();
-    if (c instanceof Array) {
-      stack.push(currentCode);
-      return this.parse(c, stack);
-    }
-    switch (c) {
-      case 'if':
-        const cond = currentCode.shift();
-        const condResult = this.parse(cond);
-        const thenCode = currentCode.shift();
-        const elseCode = currentCode.shift();
-        if (condResult) {
-          this.parse(thenCode);
-        } else {
-          this.parse(elseCode);
+      if (currentCode.length <= 0) {
+        if (stack.length <= 0) {
+          return this.resultValue;
         }
-        break;
-      case 'initial':
-        this.resultValue = this.isInitial;
-        break;
-      case 'spawn':
-        const actorName = this.parse(currentCode.shift());
-        this.game.addActor(actorName);
-        break;
-      case 'random':
-        const freqName = this.parse(currentCode.shift());
-        const ratio = this.freqNamePatterns[freqName];
-        if (ratio == null) {
-          this.resultValue = false;
-        } else {
-          this.resultValue = Math.random() < ratio;
-        }
-        break;
-      case 'place':
-        const posName = this.parse(currentCode.shift());
-        const pp = this.posNamePatterns[posName];
-        if (pp != null) {
-          if (pp.x == null) {
-            pp.x = Math.random();
+        currentCode = stack.pop();
+        continue;
+      }
+      const c = currentCode.shift();
+      if (c instanceof Array) {
+        stack.push(currentCode);
+        currentCode = c;
+        continue;
+      }
+      switch (c) {
+        case 'if':
+          const cond = currentCode.shift();
+          const condResult = this.parse(cond);
+          const thenCode = currentCode.shift();
+          const elseCode = currentCode.shift();
+          if (condResult) {
+            this.parse(thenCode);
+          } else {
+            this.parse(elseCode);
           }
-          if (pp.y == null) {
-            pp.y = Math.random();
+          break;
+        case 'initial':
+          this.resultValue = this.isInitial;
+          break;
+        case 'spawn':
+          const actorName = this.parse(currentCode.shift());
+          this.game.addActor(actorName);
+          break;
+        case 'random':
+          const freqName = this.parse(currentCode.shift());
+          const ratio = this.freqNamePatterns[freqName];
+          if (ratio == null) {
+            this.resultValue = false;
+          } else {
+            this.resultValue = Math.random() < ratio;
           }
-          this.pos.set(
-            Math.floor(pp.x * (this.screen.width - 0.01)),
-            Math.floor(pp.y * (this.screen.height - 0.01)));
-        }
-        break;
-      case 'key':
-        const keyName = this.parse(currentCode.shift());
-        const kp: number[] = this.keyNamePatterns[keyName];
-        this.resultValue = (kp != null && _.some(kp, k => this.game.isKeyDown[k]));
-        break;
-      case 'move':
-        const moveName = this.parse(currentCode.shift());
-        if (moveName === 'step_back') {
-          this.pos.set(this.prevPos.x, this.prevPos.y);
           break;
-        }
-        const mp: Vector = this.angleNamePatterns[moveName];
-        if (mp != null) {
-          this.pos.x += mp.x;
-          this.pos.y += mp.y;
-        }
-        break;
-      case 'touch':
-        const targetName = this.parse(currentCode.shift());
-        this.resultValue = this.checkTouch(targetName);
-        break;
-      case 'accelerate':
-        const angleName = this.parse(currentCode.shift());
-        if (angleName === 'bounce_vertical') {
-          this.vel.y *= -1;
+        case 'place':
+          const posName = this.parse(currentCode.shift());
+          const pp = this.posNamePatterns[posName];
+          if (pp != null) {
+            if (pp.x == null) {
+              pp.x = Math.random();
+            }
+            if (pp.y == null) {
+              pp.y = Math.random();
+            }
+            this.pos.set(
+              Math.floor(pp.x * (this.screen.width - 0.01)),
+              Math.floor(pp.y * (this.screen.height - 0.01)));
+          }
           break;
-        }
-        const speedName = this.parse(currentCode.shift());
-        const ap = this.angleNamePatterns[angleName];
-        const sp = this.accelerateNamePatterns[speedName];
-        if (ap != null && sp != null) {
-          this.vel.x += ap.x * sp;
-          this.vel.y += ap.y * sp;
-        }
-        break;
-      case 'miss':
-        this.game.end();
-        break;
-      case 'score':
-        this.game.addScore();
-        break;
-      case 'remove':
-        this.remove();
-        break;
-      default:
-        this.resultValue = c;
-        break;
+        case 'key':
+          if (this.game.isKeyDown == null) {
+            this.resultValue = false;
+            break;
+          }
+          const keyName = this.parse(currentCode.shift());
+          const kp: number[] = this.keyNamePatterns[keyName];
+          this.resultValue = (kp != null && _.some(kp, k => this.game.isKeyDown[k]));
+          break;
+        case 'move':
+          const moveName = this.parse(currentCode.shift());
+          if (moveName === 'step_back') {
+            this.pos.set(this.prevPos.x, this.prevPos.y);
+            break;
+          }
+          const mp: Vector = this.angleNamePatterns[moveName];
+          if (mp != null) {
+            this.pos.x += mp.x;
+            this.pos.y += mp.y;
+          }
+          break;
+        case 'touch':
+          const targetName = this.parse(currentCode.shift());
+          this.resultValue = this.checkTouch(targetName);
+          break;
+        case 'accelerate':
+          const angleName = this.parse(currentCode.shift());
+          if (angleName === 'bounce_vertical') {
+            this.vel.y *= -1;
+            break;
+          }
+          const speedName = this.parse(currentCode.shift());
+          const ap = this.angleNamePatterns[angleName];
+          const sp = this.accelerateNamePatterns[speedName];
+          if (ap != null && sp != null) {
+            this.vel.x += ap.x * sp;
+            this.vel.y += ap.y * sp;
+          }
+          break;
+        case 'miss':
+          this.game.end();
+          break;
+        case 'score':
+          this.game.addScore();
+          break;
+        case 'remove':
+          this.remove();
+          break;
+        default:
+          this.resultValue = c;
+          break;
+      }
     }
-    return this.parse(currentCode, stack);
   }
 
   checkTouch(targetName: string) {

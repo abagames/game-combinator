@@ -7,12 +7,16 @@ export default class Game {
   codes: any = {};
   ticks = -1;
   score = 0;
+  isValid = true;
+  actorAddingCount = 0;
 
   constructor(public screen: Screen, public isKeyDown: boolean[]) {
   }
 
   addActor(name: string) {
-    if (this.actors.length >= this.maxActorCount) {
+    this.actorAddingCount++;
+    if (this.actorAddingCount > 16) {
+      this.isValid = false;
       return;
     }
     if (!this.codes.hasOwnProperty(name)) {
@@ -24,10 +28,13 @@ export default class Game {
 
   update() {
     this.ticks++;
-    if (this.ticks % 10 > 0) {
+    if (this.screen.hasDom && this.ticks % 10 > 0) {
       return;
     }
-    this.screen.clear();
+    if (this.screen != null) {
+      this.screen.clear();
+    }
+    this.actorAddingCount = 0;
     for (let i = 0; i < this.actors.length;) {
       const a = this.actors[i];
       if (a.isAlive) {
