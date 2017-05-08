@@ -33,9 +33,9 @@ export default class Actor {
     'down': new Vector(0, 1)
   };
   accelerateNamePatterns = {
-    'fast': 0.1,
-    'normal': 0.04,
-    'slow': 0.005
+    'fast': 0.3,
+    'normal': 0.03,
+    'slow': 0.003
   };
   colorPatterns = {
     'player': '#8f8',
@@ -53,11 +53,11 @@ export default class Actor {
   update() {
     this.prevPos.set(this.pos);
     this.parseCount = 0;
-    this.parse(_.cloneDeep(this.code));
     this.pos.x += this.vel.x;
     this.pos.y += this.vel.y;
     this.vel.x *= 0.99;
     this.vel.y *= 0.99;
+    this.parse(_.cloneDeep(this.code));
     this.screen.setPoint(this.pos.x, this.pos.y, this.color);
     this.isInitial = false;
   }

@@ -15,7 +15,10 @@
       (accelerate right slow)
     )
     (accelerate down normal)
-    (if (touch player) (accelerate bounce_vertical))
+    (if (touch player) (
+      (accelerate bounce_vertical)
+      (move up)
+    ))
     (if (touch out_of_screen_bottom) miss)
     (if (touch out_of_screen_right) (
       score

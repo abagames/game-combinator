@@ -1,7 +1,7 @@
 (game helmet
   (actor stage
     (if initial (spawn player))
-    (if (random often) (spawn item))
+    (if (random frequently) (spawn item))
   )
   (actor player
     (if initial (place bottom_left))
