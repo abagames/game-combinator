@@ -5,7 +5,7 @@ import Screen from './screen';
 
 window.onload = init;
 
-const baseCodeCount = 3;
+let baseCodeCount: number;
 const baseCodes = [];
 const codeCount = 100;
 const codes = [];
@@ -19,17 +19,22 @@ function init() {
   document.onkeyup = e => {
     isKeyDown[e.keyCode] = false;
   };
-  loadCode('flap.gc');
-  loadCode('fire.gc');
-  loadCode('helmet.gc');
+  loadGameList();
+}
+
+function loadGameList() {
+  loadFile('games.txt', text => {
+    const list = _.filter(text.split('\n'), n => n.length > 0);
+    baseCodeCount = list.length;
+    _.forEach(list, name => {
+      loadCode(name);
+    });
+  });
 }
 
 function loadCode(name: string) {
-  const request = new XMLHttpRequest();
-  request.open('GET', name);
-  request.send();
-  request.onload = () => {
-    const parsed = parseSE(request.responseText);
+  loadFile(name, text => {
+    const parsed = parseSE(text);
     if (parsed instanceof Error) {
       const err: any = parsed;
       console.error(`${err} line: ${err.line} col: ${err.col} (${name})`);
@@ -39,6 +44,15 @@ function loadCode(name: string) {
     if (baseCodes.length >= baseCodeCount) {
       start();
     }
+  });
+}
+
+function loadFile(name: string, callback: (name: string) => void) {
+  const request = new XMLHttpRequest();
+  request.open('GET', name);
+  request.send();
+  request.onload = () => {
+    callback(request.responseText);
   };
 }
 

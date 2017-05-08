@@ -1,0 +1,3 @@
+flap.gc
+fire.gc
+helmet.gc
