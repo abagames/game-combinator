@@ -1,0 +1,18 @@
+(game flap
+  (actor stage
+    (if initial (spawn player))
+    (if (random frequently) (spawn item))
+  )
+  (actor player
+    (if initial (place left_center))
+    (if (key up) (accelerate up fast))
+    (accelerate down normal)
+    (if (touch out_of_screen) miss)
+    (if (touch item) miss)
+  )
+  (actor item
+    (if initial (place right))
+    (move left)
+    (if (touch out_of_screen) remove)
+  )
+)

@@ -5,7 +5,7 @@ import Screen from './screen';
 
 window.onload = init;
 
-const baseCodeCount = 2;
+const baseCodeCount = 3;
 const baseCodes = [];
 const codeCount = 100;
 const codes = [];
@@ -19,6 +19,7 @@ function init() {
   document.onkeyup = e => {
     isKeyDown[e.keyCode] = false;
   };
+  loadCode('flap.gc');
   loadCode('fire.gc');
   loadCode('helmet.gc');
 }
@@ -42,6 +43,7 @@ function loadCode(name: string) {
 }
 
 function start() {
+  //*
   _.times(codeCount, i => {
     codes.push(_.cloneDeep(baseCodes[i % baseCodeCount]));
   });
@@ -53,6 +55,10 @@ function start() {
   console.log(sortedCodes[0].score);
   game = new Game(new Screen(), isKeyDown);
   beginGame(sortedCodes[0].code, game);
+  /*/
+  game = new Game(new Screen(), isKeyDown);
+  beginGame(baseCodes[0], game);
+  //*/
   update();
 }
 

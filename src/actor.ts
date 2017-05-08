@@ -20,11 +20,15 @@ export default class Actor {
   posNamePatterns = {
     'top_left': { x: 0, y: 0 },
     'bottom_left': { x: 0, y: 1 },
-    'top': { x: null, y: 0 }
+    'left_center': { x: 0, y: 0.5 },
+    'top': { x: null, y: 0 },
+    'right': { x: 1, y: null }
   };
   keyNamePatterns = {
     'left': [65, 37],
-    'right': [68, 39]
+    'right': [68, 39],
+    'up': [87, 38],
+    'down': [83, 40],
   };
   angleNamePatterns = {
     'left': new Vector(-1, 0),
@@ -200,7 +204,7 @@ export default class Actor {
     switch (targetName) {
       case 'out_of_screen':
         return this.pos.x < 0 || this.pos.x >= sw ||
-          this.pos.x < 0 || this.pos.y >= sh;
+          this.pos.y < 0 || this.pos.y >= sh;
       case 'out_of_screen_bottom':
         return this.pos.x >= 0 && this.pos.x < sw && this.pos.y >= sh;
       case 'out_of_screen_right':
