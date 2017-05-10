@@ -1,5 +1,6 @@
 import Actor from './actor';
 import Screen from './screen';
+import Random from './random';
 
 export default class Game {
   maxActorCount = 100;
@@ -9,6 +10,7 @@ export default class Game {
   score = 0;
   isValid = true;
   actorAddingCount = 0;
+  random = new Random();
 
   constructor(public screen: Screen, public isKeyDown: boolean[]) {
   }

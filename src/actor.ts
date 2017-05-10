@@ -122,7 +122,7 @@ export default class Actor {
           if (ratio == null) {
             this.resultValue = false;
           } else {
-            this.resultValue = Math.random() < ratio;
+            this.resultValue = this.game.random.get() < ratio;
           }
           break;
         case 'place':
@@ -130,10 +130,10 @@ export default class Actor {
           const pp = this.posNamePatterns[posName];
           if (pp != null) {
             if (pp.x == null) {
-              pp.x = Math.random();
+              pp.x = this.game.random.get();
             }
             if (pp.y == null) {
-              pp.y = Math.random();
+              pp.y = this.game.random.get();
             }
             this.pos.set(
               Math.floor(pp.x * (this.screen.width - 0.01)),
