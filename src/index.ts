@@ -169,7 +169,7 @@ function beginGame(gameCode: any, game: Game) {
       game.codes[name] = ac;
     }
   });
-  game.addActor('stage');
+  game.begin();
 }
 
 function update() {

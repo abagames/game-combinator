@@ -180,7 +180,7 @@ export default class Actor {
           }
           break;
         case 'miss':
-          this.game.end();
+          this.game.miss();
           break;
         case 'score':
           this.game.addScore();

@@ -15,6 +15,10 @@ export default class Game {
   constructor(public screen: Screen, public isKeyDown: boolean[]) {
   }
 
+  begin() {
+    this.addActor('stage');
+  }
+
   addActor(name: string) {
     this.actorAddingCount++;
     if (this.actorAddingCount > 16) {
@@ -50,7 +54,7 @@ export default class Game {
     }
   }
 
-  end() {
+  miss() {
     this.actors = [];
   }
 
