@@ -8,6 +8,7 @@ export default class Screen {
   colorPatterns = [
     '#8f8', '#f88', '#88f', '#f8f'
   ];
+  statusDom: HTMLElement;
 
   constructor(domId = 'main', public width = 15, public height = 15) {
     this.pixels = _.times(width, () => _.times(height, () => -1));
@@ -17,6 +18,7 @@ export default class Screen {
     }
     this.canvas = <HTMLCanvasElement>document.getElementById(domId);
     this.context = this.canvas.getContext('2d');
+    this.statusDom = document.getElementById('status');
   }
 
   clear() {
@@ -54,5 +56,12 @@ export default class Screen {
       });
     });
     return score;
+  }
+
+  showStatus(text: string) {
+    if (!this.hasDom) {
+      return;
+    }
+    this.statusDom.textContent = text;
   }
 }
