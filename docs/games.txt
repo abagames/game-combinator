@@ -3,3 +3,4 @@ helmet.gc
 flap.gc
 defend.gc
 pooy.gc
+bomb.gc
