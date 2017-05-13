@@ -13,18 +13,20 @@ export default class Game {
   isValid = true;
   actorAddingCount = 0;
   random = new Random();
+  isAutoPressing = false;
   autoPressingKeys = [37, 38, 39, 40];
   autoPressingRandom = new Random();
   actorNames = ['stage', 'player', 'enemy', 'shot', 'bullet'];
 
   constructor(public screen: Screen, public isKeyDown: boolean[],
     randomSeed: number = null,
-    public isAutoKeyPressed = false) {
+    autoPressingRandomSeed: number = null) {
     if (randomSeed != null) {
       this.random.setSeed(randomSeed);
-      this.autoPressingRandom.setSeed(randomSeed);
     }
-    if (isAutoKeyPressed) {
+    if (autoPressingRandomSeed != null) {
+      this.autoPressingRandom.setSeed(autoPressingRandomSeed);
+      this.isAutoPressing = true;
       this.isKeyDown = _.times(256, () => false);
     }
   }
@@ -64,7 +66,7 @@ export default class Game {
     if (this.screen.hasDom && this.ticks % 10 > 0) {
       return;
     }
-    if (this.isAutoKeyPressed) {
+    if (this.isAutoPressing) {
       if (this.autoPressingRandom.get() < 0.2) {
         _.forEach(this.autoPressingKeys, k => {
           this.isKeyDown[k] = false;
@@ -91,6 +93,7 @@ export default class Game {
         this.actors.splice(i, 1);
       }
     }
+    this.screen.showStatus(`score: ${this.score}  miss: ${this.missCount}`);
   }
 
   miss() {
@@ -104,6 +107,10 @@ export default class Game {
   }
 
   diff(otherGame: Game) {
-    return this.screen.diff(otherGame.screen);
+    let value = 0;
+    value += this.screen.diff(otherGame.screen);
+    value += Math.abs(this.score - otherGame.score);
+    value += Math.abs(this.missCount - otherGame.missCount);
+    return value;
   }
 }

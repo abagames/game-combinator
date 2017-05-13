@@ -15,6 +15,7 @@ let isKeyDown = _.times(256, () => false);
 let random: Random;
 
 function init() {
+  document.getElementById('status').textContent = 'generating...';
   document.onkeydown = e => {
     isKeyDown[e.keyCode] = true;
   };
@@ -71,7 +72,7 @@ function start() {
   });
   const sortedCodes = sortCodes();
   console.log(JSON.stringify(_.cloneDeep(sortedCodes[0].code), null, 2));
-  console.log(sortedCodes[0].score);
+  console.log(sortedCodes[0].fitness);
   const game = new Game(new Screen(), isKeyDown);
   game.begin(sortedCodes[0].code);
   /*/
@@ -87,15 +88,15 @@ function start() {
 
 function sortCodes() {
   const scoredCodes = _.map(codes, code => {
-    const score = addScoreToCode(code);
-    return { code, score };
+    const fitness = addFitnessToCode(code);
+    return { code, fitness };
   });
-  return _(scoredCodes).sortBy('score').reverse().value();
+  return _(scoredCodes).sortBy('fitness').reverse().value();
 }
 
-function addScoreToCode(code) {
+function addFitnessToCode(code) {
   const games = _.times(2, i => {
-    const game = new Game(new Screen(null), null, 0, i === 1);
+    const game = new Game(new Screen(null), null, 0, i);
     game.begin(code);
     return game;
   });
@@ -122,10 +123,6 @@ function combine() {
   const p2 = getCodePart(codes[random.getInt(codeCount)]);
   p1.parent.splice(p1.index, 0, _.cloneDeep(p2.parent[p2.index]));
   p2.parent.splice(p2.index, 1);
-  /*let cp1 = _.cloneDeep(p1.parent[p1.index]);
-  let cp2 = _.cloneDeep(p2.parent[p2.index]);
-  p1.parent[p1.index] = cp2;
-  p2.parent[p2.index] = cp1;*/
 }
 
 function getCodePart(code: any[], targetDepth = 1, depth = 0) {
