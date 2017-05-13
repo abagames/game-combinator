@@ -1,7 +1,7 @@
-(game shot
+(game defend
   (actor stage
     (if initial (spawn player))
-    (if (random often) (spawn item))
+    (if (random often) (spawn enemy))
   )
   (actor player
     (if initial (place left_center))
@@ -11,7 +11,7 @@
     (if (touch out_of_screen_top) (place bottom_left))
     (if (touch out_of_screen_bottom) (place top_left))
   )
-  (actor item
+  (actor enemy
     (if initial (place right))
     (accelerate left slow)
     (if (touch out_of_screen) miss)
@@ -24,7 +24,7 @@
   (actor shot
     (move right)
     (if (touch out_of_screen) remove)
-    (if (touch item) (
+    (if (touch enemy) (
       score
       remove
       remove_touched

@@ -73,30 +73,16 @@ function start() {
   console.log(JSON.stringify(_.cloneDeep(sortedCodes[0].code), null, 2));
   console.log(sortedCodes[0].score);
   const game = new Game(new Screen(), isKeyDown);
-  beginGame(sortedCodes[0].code, game);
+  game.begin(sortedCodes[0].code);
   /*/
   const game = new Game(new Screen(), isKeyDown);
-  beginGame(baseCodes[3], game);
+  game.begin(baseCodes[4]);
   //*/
   const updateFunc = () => {
     requestAnimationFrame(updateFunc);
     game.update();
   };
   updateFunc();
-}
-
-function beginGame(gameCode: any, game: Game) {
-  const code = _.cloneDeep(gameCode);
-  code.splice(0, 2); // Remove 'game', [name]
-  const actorNames = ['stage', 'player', 'item', 'shot'];
-  _.forEach(code, ac => {
-    const name = ac[1];
-    if (_.some(actorNames, an => an === name)) {
-      ac.splice(0, 2); // Remove 'actor', [name]
-      game.codes[name] = ac;
-    }
-  });
-  game.begin();
 }
 
 function sortCodes() {
@@ -110,7 +96,7 @@ function sortCodes() {
 function addScoreToCode(code) {
   const games = _.times(2, i => {
     const game = new Game(new Screen(null), null, 0, i === 1);
-    beginGame(code, game);
+    game.begin(code);
     return game;
   });
   let score = 0;

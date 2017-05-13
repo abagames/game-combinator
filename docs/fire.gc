@@ -1,7 +1,7 @@
 (game fire
   (actor stage
     (if initial (spawn player))
-    (if (random rarely) (spawn item))
+    (if (random rarely) (spawn enemy))
   )
   (actor player
     (if initial (place bottom_left))
@@ -9,7 +9,7 @@
     (if (key right) (move right))
     (if (touch out_of_screen) (move step_back))
   )
-  (actor item
+  (actor enemy
     (if initial (
       (place top_left)
       (accelerate right fast)

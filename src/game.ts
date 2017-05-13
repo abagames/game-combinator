@@ -15,6 +15,7 @@ export default class Game {
   random = new Random();
   autoPressingKeys = [37, 38, 39, 40];
   autoPressingRandom = new Random();
+  actorNames = ['stage', 'player', 'enemy', 'shot'];
 
   constructor(public screen: Screen, public isKeyDown: boolean[],
     randomSeed: number = null,
@@ -27,7 +28,18 @@ export default class Game {
     }
   }
 
-  begin() {
+  begin(gameCode = null) {
+    if (gameCode != null) {
+      const code = _.cloneDeep(gameCode);
+      code.splice(0, 2); // Remove 'game', [name]
+      _.forEach(code, ac => {
+        const name = ac[1];
+        if (_.some(this.actorNames, an => an === name)) {
+          ac.splice(0, 2); // Remove 'actor', [name]
+          this.codes[name] = ac;
+        }
+      });
+    }
     this.addActor('stage');
   }
 

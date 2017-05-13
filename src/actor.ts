@@ -22,7 +22,12 @@ export default class Actor {
     'top_left': { x: 0, y: 0 },
     'bottom_left': { x: 0, y: 1 },
     'left_center': { x: 0, y: 0.5 },
+    'top_right': { x: 1, y: 0 },
+    'bottom_right': { x: 1, y: 1 },
+    'right_center': { x: 1, y: 0.5 },
     'top': { x: null, y: 0 },
+    'bottom': { x: null, y: 1 },
+    'left': { x: 0, y: null },
     'right': { x: 1, y: null }
   };
   keyNamePatterns = {
@@ -42,11 +47,10 @@ export default class Actor {
     'normal': 0.03,
     'slow': 0.01
   };
-  colorIndices = ['player', 'item', 'shot'];
 
   constructor(public name: string, public code: any[], public game: Game) {
     this.screen = game.screen;
-    const ci = this.colorIndices.indexOf(name);
+    const ci = game.actorNames.indexOf(name) - 1;
     if (ci >= 0) {
       this.colorIndex = ci;
     }
@@ -155,6 +159,7 @@ export default class Actor {
             this.pos.set(
               Math.floor(pp.x * (this.screen.width - 0.01)),
               Math.floor(pp.y * (this.screen.height - 0.01)));
+            this.prevPos.set(this.pos);
           }
           break;
         case 'key':
@@ -223,6 +228,20 @@ export default class Actor {
     }
     const sw = this.screen.width;
     const sh = this.screen.height;
+    const ti = this.game.actorNames.indexOf(targetName);
+    if (ti >= 0) {
+      this.touchedActor = null;
+      const x = Math.floor(this.pos.x);
+      const y = Math.floor(this.pos.y);
+      return _.some(this.game.actors, a => {
+        const isTouched = (a !== this && a.name === targetName &&
+          Math.floor(a.pos.x) === x && Math.floor(a.pos.y) === y);
+        if (isTouched) {
+          this.touchedActor = a;
+        }
+        return isTouched;
+      });
+    }
     switch (targetName) {
       case 'out_of_screen':
         return this.pos.x < 0 || this.pos.x >= sw ||
@@ -235,20 +254,6 @@ export default class Actor {
         return this.pos.y >= 0 && this.pos.y < sh && this.pos.x < 0;
       case 'out_of_screen_right':
         return this.pos.y >= 0 && this.pos.y < sh && this.pos.x >= sw;
-      case 'player':
-      case 'item':
-      case 'shot':
-        this.touchedActor = null;
-        const x = Math.floor(this.pos.x);
-        const y = Math.floor(this.pos.y);
-        return _.some(this.game.actors, a => {
-          const isTouched = (a !== this && a.name === targetName &&
-            Math.floor(a.pos.x) === x && Math.floor(a.pos.y) === y);
-          if (isTouched) {
-            this.touchedActor = a;
-          }
-          return isTouched;
-        });
     }
   }
 }
