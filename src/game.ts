@@ -8,6 +8,7 @@ export default class Game {
   codes: any = {};
   ticks = -1;
   score = 0;
+  missCount = 0;
   isValid = true;
   actorAddingCount = 0;
   random = new Random();
@@ -56,6 +57,7 @@ export default class Game {
 
   miss() {
     this.actors = [];
+    this.missCount++;
   }
 
   addScore(score = 1) {
