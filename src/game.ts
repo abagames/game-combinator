@@ -22,6 +22,7 @@ export default class Game {
     public isAutoKeyPressed = false) {
     if (randomSeed != null) {
       this.random.setSeed(randomSeed);
+      this.autoPressingRandom.setSeed(randomSeed);
     }
     if (isAutoKeyPressed) {
       this.isKeyDown = _.times(256, () => false);

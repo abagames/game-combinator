@@ -51,7 +51,7 @@ export default class Screen {
         if (this.pixels[x][y] !== otherScreen.pixels[x][y]) {
           score++;
         }
-      })
+      });
     });
     return score;
   }

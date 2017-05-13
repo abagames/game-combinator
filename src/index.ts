@@ -67,7 +67,7 @@ function start() {
     codes.push(_.cloneDeep(baseCodes[i % baseCodeCount]));
   });
   _.times(codeCount * 10, () => {
-    combine()
+    combine();
   });
   const sortedCodes = sortCodes();
   console.log(JSON.stringify(_.cloneDeep(sortedCodes[0].code), null, 2));
