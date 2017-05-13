@@ -9,11 +9,17 @@
     (if (key down) (move down))
     (if (interval often) (spawn shot))
     (if (touch out_of_screen) (move step_back))
+    (if (touch bullet) miss)
   )
   (actor enemy
-    (if initial (place top))
+    (if initial (
+      (place top)
+      (move left)
+      (move left)
+    ))
     (accelerate down slow)
-    (if (touch out_of_screen) miss)
+    (if (random rarely) (spawn bullet))
+    (if (touch out_of_screen) remove)
     (if (touch shot) (
       score
       remove
@@ -27,5 +33,9 @@
       score
       remove_touched
     ))
+  )
+  (actor bullet
+    (move right)
+    (if (touch out_of_screen) remove)
   )
 )

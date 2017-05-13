@@ -6,7 +6,7 @@ export default class Screen {
   hasDom = true;
   pixels: number[][];
   colorPatterns = [
-    '#8f8', '#f88', '#88f'
+    '#8f8', '#f88', '#88f', '#f8f'
   ];
 
   constructor(domId = 'main', public width = 15, public height = 15) {

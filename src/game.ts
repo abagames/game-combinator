@@ -15,7 +15,7 @@ export default class Game {
   random = new Random();
   autoPressingKeys = [37, 38, 39, 40];
   autoPressingRandom = new Random();
-  actorNames = ['stage', 'player', 'enemy', 'shot'];
+  actorNames = ['stage', 'player', 'enemy', 'shot', 'bullet'];
 
   constructor(public screen: Screen, public isKeyDown: boolean[],
     randomSeed: number = null,
