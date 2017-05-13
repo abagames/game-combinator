@@ -13,6 +13,9 @@
   (actor item
     (if initial (place right))
     (move left)
-    (if (touch out_of_screen) remove)
+    (if (touch out_of_screen) (
+      score
+      remove
+    ))
   )
 )

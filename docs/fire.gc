@@ -10,19 +10,17 @@
     (if (touch out_of_screen) (move step_back))
   )
   (actor item
-    (if initial
+    (if initial (
       (place top_left)
-      (accelerate right slow)
-    )
+      (accelerate right fast)
+    ))
     (accelerate down normal)
     (if (touch player) (
+      score
       (accelerate bounce_vertical)
       (move up)
     ))
     (if (touch out_of_screen_bottom) miss)
-    (if (touch out_of_screen_right) (
-      score
-      remove
-    ))
+    (if (touch out_of_screen_right) remove)
   )
 )
