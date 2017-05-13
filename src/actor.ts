@@ -10,7 +10,7 @@ export default class Actor {
   isInitial = true;
   resultValue: any;
   isAlive = true;
-  color = '#fff';
+  colorIndex = -1;
   parseCount = 0;
   freqNamePatterns = {
     'rarely': 0.05,
@@ -41,16 +41,13 @@ export default class Actor {
     'normal': 0.03,
     'slow': 0.003
   };
-  colorPatterns = {
-    'player': '#8f8',
-    'item': '#f88'
-  }
+  colorIndices = ['player', 'item'];
 
   constructor(public name: string, public code: any[], public game: Game) {
     this.screen = game.screen;
-    const cp = this.colorPatterns[name];
-    if (cp != null) {
-      this.color = cp;
+    const ci = this.colorIndices.indexOf(name);
+    if (ci >= 0) {
+      this.colorIndex = ci;
     }
   }
 
@@ -62,7 +59,7 @@ export default class Actor {
     this.vel.x *= 0.99;
     this.vel.y *= 0.99;
     this.parse(_.cloneDeep(this.code));
-    this.screen.setPoint(this.pos.x, this.pos.y, this.color);
+    this.screen.setPoint(this.pos.x, this.pos.y, this.colorIndex);
     this.isInitial = false;
   }
 
