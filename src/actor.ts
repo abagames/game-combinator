@@ -37,9 +37,9 @@ export default class Actor {
     'down': new Vector(0, 1)
   };
   accelerateNamePatterns = {
-    'fast': 0.3,
+    'fast': 0.1,
     'normal': 0.03,
-    'slow': 0.003
+    'slow': 0.01
   };
   colorIndices = ['player', 'item'];
 
