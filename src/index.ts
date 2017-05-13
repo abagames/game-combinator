@@ -12,7 +12,6 @@ let loadedBaseCodeCount = 0;
 const codeCount = 100;
 const codes = [];
 let isKeyDown = _.times(256, () => false);
-let game: Game;
 let random: Random;
 
 function init() {
@@ -73,13 +72,31 @@ function start() {
   const sortedCodes = sortCodes();
   console.log(JSON.stringify(_.cloneDeep(sortedCodes[0].code), null, 2));
   console.log(sortedCodes[0].score);
-  game = new Game(new Screen(), isKeyDown);
+  const game = new Game(new Screen(), isKeyDown);
   beginGame(sortedCodes[0].code, game);
   /*/
-  game = new Game(new Screen(), isKeyDown);
-  beginGame(baseCodes[0], game);
+  const game = new Game(new Screen(), isKeyDown);
+  beginGame(baseCodes[2], game);
   //*/
-  update();
+  const updateFunc = () => {
+    requestAnimationFrame(updateFunc);
+    game.update();
+  };
+  updateFunc();
+}
+
+function beginGame(gameCode: any, game: Game) {
+  const code = _.cloneDeep(gameCode);
+  code.splice(0, 2); // Remove 'game', [name]
+  const actorNames = ['stage', 'player', 'item', 'shot'];
+  _.forEach(code, ac => {
+    const name = ac[1];
+    if (_.some(actorNames, an => an === name)) {
+      ac.splice(0, 2); // Remove 'actor', [name]
+      game.codes[name] = ac;
+    }
+  });
+  game.begin();
 }
 
 function sortCodes() {
@@ -91,40 +108,27 @@ function sortCodes() {
 }
 
 function addScoreToCode(code) {
-  const screen = new Screen(null);
-  const game = new Game(screen, null);
-  beginGame(code, game);
-  let existsPlayer = false;
-  let existsItem = false;
-  for (let i = 0; i < 60; i++) {
-    game.update();
-    if (!game.isValid) {
-      existsPlayer = existsItem = false;
-      break;
-    }
-    if (i > 30) {
-      _.forEach(game.actors, a => {
-        if (a.name === 'player' && isInScreen(a.pos, screen)) {
-          existsPlayer = true;
-        }
-        if (a.name === 'item' && isInScreen(a.pos, screen)) {
-          existsItem = true;
-        }
-      });
-    }
-  }
+  const games = _.times(2, i => {
+    const game = new Game(new Screen(null), null, 0, i === 1);
+    beginGame(code, game);
+    return game;
+  });
   let score = 0;
-  if (existsPlayer) {
-    score += 2;
-  }
-  if (existsItem) {
-    score++;
+  for (let i = 0; i < 100; i++) {
+    let isValid = true;
+    _.forEach(games, game => {
+      game.update();
+      if (!game.isValid) {
+        isValid = false;
+        return false;
+      }
+    });
+    if (!isValid) {
+      return 0;
+    }
+    score += games[0].diff(games[1]);
   }
   return score;
-}
-
-function isInScreen(p, screen: Screen) {
-  return (p.x >= 0 && p.x < screen.width && p.y >= 0 && p.y < screen.height);
 }
 
 function combine() {
@@ -156,23 +160,4 @@ function getCodePart(code: any[], targetDepth = 1, depth = 0) {
     return { parent: code, index: ci };
   }
   return getCodePart(part, targetDepth, depth + 1);
-}
-
-function beginGame(gameCode: any, game: Game) {
-  const code = _.cloneDeep(gameCode);
-  code.splice(0, 2); // Remove 'game', [name]
-  const actorNames = ['stage', 'player', 'item'];
-  _.forEach(code, ac => {
-    const name = ac[1];
-    if (_.some(actorNames, an => an === name)) {
-      ac.splice(0, 2); // Remove 'actor', [name]
-      game.codes[name] = ac;
-    }
-  });
-  game.begin();
-}
-
-function update() {
-  requestAnimationFrame(update);
-  game.update();
 }

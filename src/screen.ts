@@ -43,4 +43,16 @@ export default class Screen {
     this.context.fillStyle = this.colorPatterns[colorIndex];
     this.context.fillRect(px, py, 1, 1);
   }
+
+  diff(otherScreen: Screen) {
+    let score = 0;
+    _.times(this.width, x => {
+      _.times(this.height, y => {
+        if (this.pixels[x][y] !== otherScreen.pixels[x][y]) {
+          score++;
+        }
+      })
+    });
+    return score;
+  }
 }
