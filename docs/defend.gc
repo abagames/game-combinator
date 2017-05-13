@@ -1,0 +1,33 @@
+(game shot
+  (actor stage
+    (if initial (spawn player))
+    (if (random often) (spawn item))
+  )
+  (actor player
+    (if initial (place left_center))
+    (if (key up) (move up))
+    (if (key down) (move down))
+    (if (interval frequently) (spawn shot))
+    (if (touch out_of_screen_top) (place bottom_left))
+    (if (touch out_of_screen_bottom) (place top_left))
+  )
+  (actor item
+    (if initial (place right))
+    (accelerate left slow)
+    (if (touch out_of_screen) miss)
+    (if (touch shot) (
+      score
+      remove
+      remove_touched
+    ))
+  )
+  (actor shot
+    (move right)
+    (if (touch out_of_screen) remove)
+    (if (touch item) (
+      score
+      remove
+      remove_touched
+    ))
+  )
+)

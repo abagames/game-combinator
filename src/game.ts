@@ -35,13 +35,15 @@ export default class Game {
     this.actorAddingCount++;
     if (this.actorAddingCount > 16) {
       this.isValid = false;
-      return;
+      return null;
     }
     if (!this.codes.hasOwnProperty(name)) {
       //console.log(`Actor '${name}' is not defined`);
-      return;
+      return null;
     }
-    this.actors.push(new Actor(name, this.codes[name], this));
+    const actor = new Actor(name, this.codes[name], this);
+    this.actors.push(actor);
+    return actor;
   }
 
   update() {

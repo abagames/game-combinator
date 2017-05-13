@@ -76,7 +76,7 @@ function start() {
   beginGame(sortedCodes[0].code, game);
   /*/
   const game = new Game(new Screen(), isKeyDown);
-  beginGame(baseCodes[2], game);
+  beginGame(baseCodes[3], game);
   //*/
   const updateFunc = () => {
     requestAnimationFrame(updateFunc);

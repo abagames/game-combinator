@@ -7,9 +7,10 @@ export default class Actor {
   pos = new Vector(-1, -1);
   prevPos = new Vector();
   vel = new Vector();
-  isInitial = true;
   resultValue: any;
+  touchedActor: Actor;
   isAlive = true;
+  ticks = 0;
   colorIndex = -1;
   parseCount = 0;
   freqNamePatterns = {
@@ -41,7 +42,7 @@ export default class Actor {
     'normal': 0.03,
     'slow': 0.01
   };
-  colorIndices = ['player', 'item'];
+  colorIndices = ['player', 'item', 'shot'];
 
   constructor(public name: string, public code: any[], public game: Game) {
     this.screen = game.screen;
@@ -60,7 +61,13 @@ export default class Actor {
     this.vel.y *= 0.99;
     this.parse(_.cloneDeep(this.code));
     this.screen.setPoint(this.pos.x, this.pos.y, this.colorIndex);
-    this.isInitial = false;
+    if (this.pos.x < -this.screen.width * 0.5 ||
+      this.pos.x >= this.screen.width * 1.5 ||
+      this.pos.y < -this.screen.height * 0.5 ||
+      this.pos.y >= this.screen.height * 1.5) {
+      this.remove();
+    }
+    this.ticks++;
   }
 
   remove() {
@@ -107,19 +114,32 @@ export default class Actor {
           }
           break;
         case 'initial':
-          this.resultValue = this.isInitial;
+          this.resultValue = this.ticks === 0;
           break;
         case 'spawn':
           const actorName = this.parse(currentCode.shift());
-          this.game.addActor(actorName);
+          const actor = this.game.addActor(actorName);
+          if (actor != null) {
+            actor.pos.set(this.pos);
+          }
           break;
         case 'random':
           const freqName = this.parse(currentCode.shift());
-          const ratio = this.freqNamePatterns[freqName];
-          if (ratio == null) {
+          const randomFreq = this.freqNamePatterns[freqName];
+          if (randomFreq == null) {
             this.resultValue = false;
           } else {
-            this.resultValue = this.game.random.get() < ratio;
+            this.resultValue = this.game.random.get() < randomFreq;
+          }
+          break;
+        case 'interval':
+          const intervalName = this.parse(currentCode.shift());
+          const intervalFreq = this.freqNamePatterns[intervalName];
+          if (intervalFreq == null) {
+            this.resultValue = false;
+          } else {
+            const it = Math.floor(1 / intervalFreq);
+            this.resultValue = this.ticks % it === 0;
           }
           break;
         case 'place':
@@ -185,6 +205,11 @@ export default class Actor {
         case 'remove':
           this.remove();
           break;
+        case 'remove_touched':
+          if (this.touchedActor != null) {
+            this.touchedActor.remove();
+          }
+          break;
         default:
           this.resultValue = c;
           break;
@@ -202,17 +227,28 @@ export default class Actor {
       case 'out_of_screen':
         return this.pos.x < 0 || this.pos.x >= sw ||
           this.pos.y < 0 || this.pos.y >= sh;
+      case 'out_of_screen_top':
+        return this.pos.x >= 0 && this.pos.x < sw && this.pos.y < 0;
       case 'out_of_screen_bottom':
         return this.pos.x >= 0 && this.pos.x < sw && this.pos.y >= sh;
+      case 'out_of_screen_left':
+        return this.pos.y >= 0 && this.pos.y < sh && this.pos.x < 0;
       case 'out_of_screen_right':
         return this.pos.y >= 0 && this.pos.y < sh && this.pos.x >= sw;
       case 'player':
       case 'item':
+      case 'shot':
+        this.touchedActor = null;
         const x = Math.floor(this.pos.x);
         const y = Math.floor(this.pos.y);
-        return _.some(this.game.actors, a =>
-          (a !== this && a.name === targetName &&
-            Math.floor(a.pos.x) === x && Math.floor(a.pos.y) === y));
+        return _.some(this.game.actors, a => {
+          const isTouched = (a !== this && a.name === targetName &&
+            Math.floor(a.pos.x) === x && Math.floor(a.pos.y) === y);
+          if (isTouched) {
+            this.touchedActor = a;
+          }
+          return isTouched;
+        });
     }
   }
 }
