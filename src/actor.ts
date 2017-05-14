@@ -31,10 +31,9 @@ export default class Actor {
     'top': { x: null, y: 0 },
     'bottom': { x: null, y: 1 },
     'left': { x: 0, y: null },
-    'right': { x: 1, y: null },
-    'any': { x: null, y: null }
+    'right': { x: 1, y: null }
   };
-  defaultPosName = 'any';
+  defaultPosName = 'center';
   keyNamePatterns = {
     'left': [65, 37],
     'right': [68, 39],

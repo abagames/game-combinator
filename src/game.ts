@@ -128,7 +128,7 @@ export default class Game {
 
   diff(otherGame: Game) {
     let value = 0;
-    value += this.screen.diff(otherGame.screen);
+    value += Math.sqrt(this.screen.diff(otherGame.screen));
     value += Math.sqrt(Math.abs(this.score - otherGame.score));
     value += Math.sqrt(Math.abs(this.missCount - otherGame.missCount));
     return value;
