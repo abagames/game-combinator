@@ -81,6 +81,8 @@ export default class Game {
     }
     if (this.screen.hasDom) {
       requestAnimationFrame(this.update);
+    } else {
+      this.score = this.missCount = 0;
     }
     this.ticks++;
     if (this.screen.hasDom && this.ticks % 10 > 0) {
@@ -127,10 +129,15 @@ export default class Game {
   }
 
   diff(otherGame: Game) {
-    let value = 0;
+    return {
+      screen: this.screen.diff(otherGame.screen),
+      score: Math.abs(this.score - otherGame.score),
+      miss: Math.abs(this.missCount - otherGame.missCount)
+    };
+    /*let value = 0;
     value += Math.sqrt(this.screen.diff(otherGame.screen));
     value += Math.sqrt(Math.abs(this.score - otherGame.score));
     value += Math.sqrt(Math.abs(this.missCount - otherGame.missCount));
-    return value;
+    return value;*/
   }
 }

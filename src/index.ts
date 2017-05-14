@@ -9,7 +9,9 @@ window.onload = init;
 const codeCount = 250;
 const genCount = 5;
 const aliveRatio = 0.25;
+const fitnessCalcTicks = 100;
 let baseCodeCount: number;
+let baseCodeNames: string[];
 let baseCodes: any[];
 let loadedBaseCodeCount = 0;
 let codeSeed: number;
@@ -50,12 +52,11 @@ function initEventHandlers() {
 
 function loadGameList() {
   loadFile('games.txt', text => {
-    const list = _.filter(text.split('\n'), n => n.length > 0);
-    baseCodeCount = list.length;
+    baseCodeNames = _.filter(text.split('\n'), n => n.length > 0);
+    baseCodeNames = _.map(baseCodeNames, n => n.trim());
+    baseCodeCount = baseCodeNames.length;
     baseCodes = _.times(baseCodeCount, () => null);
-    _.forEach(list, (name, i) => {
-      loadCode(name, i);
-    });
+    _.forEach(baseCodeNames, loadCode);
   });
 }
 
@@ -71,6 +72,7 @@ function loadCode(name: string, index: number) {
     loadedBaseCodeCount++;
     if (loadedBaseCodeCount >= baseCodeCount) {
       beginGenerating();
+      //beginBaseGame('fire.gc');
     }
   });
 }
@@ -82,6 +84,13 @@ function loadFile(name: string, callback: (name: string) => void) {
   request.onload = () => {
     callback(request.responseText);
   };
+}
+
+function beginBaseGame(name: string) {
+  const code = baseCodes[baseCodeNames.indexOf(name)];
+  console.log(calcFitness(code));
+  const game = new Game(new Screen(), isKeyDown);
+  game.begin(code);
 }
 
 function beginGenerating(randomSeed: number = null) {
@@ -155,13 +164,27 @@ function endSortingCodes() {
 function addFitnessToCode() {
   showInfo(`generating... ${genIndex + 1} / ${genCount} : ${fitnessIndex} / ${codeCount}`);
   const code = codes[fitnessIndex].code;
-  const games = _.times(2, i => {
+  const fitness = calcFitness(code);
+  codesWithFitness.push({ code, fitness });
+  fitnessIndex++;
+  if (fitnessIndex >= codeCount) {
+    endSortingCodes();
+  } else {
+    setTimeout(addFitnessToCode, 0);
+  }
+}
+
+function calcFitness(code: any[]) {
+  const gameCount = 8;
+  const games = _.times(gameCount, i => {
     const game = new Game(new Screen(null), null, 0, i);
     game.begin(code);
     return game;
   });
-  let fitness = 0;
-  for (let i = 0; i < 100; i++) {
+  let screenDiff = 0;
+  let scoreDiff = 0;
+  let missDiff = 0;
+  for (let i = 0; i < fitnessCalcTicks; i++) {
     let isValid = true;
     _.forEach(games, game => {
       game.update();
@@ -171,17 +194,35 @@ function addFitnessToCode() {
       }
     });
     if (!isValid) {
-      fitness = 0;
-      break;
+      return 0;
     }
-    fitness += games[0].diff(games[1]);
+    for (let j = 0; j < gameCount - 1; j++) {
+      for (let k = j + 1; k < gameCount; k++) {
+        const diff = games[j].diff(games[k]);
+        screenDiff += diff.screen;
+        scoreDiff += diff.score;
+        missDiff += diff.miss;
+      }
+    }
   }
-  codesWithFitness.push({ code, fitness });
-  fitnessIndex++;
-  if (fitnessIndex >= codeCount) {
-    endSortingCodes();
+  //console.log(screenDiff);
+  //console.log(scoreDiff);
+  //console.log(missDiff);
+  let fitness = 0;
+  fitness += fitnessValue(screenDiff, 15000, 100000, 200000);
+  fitness += fitnessValue(scoreDiff, 0, 100, 300);
+  fitness += fitnessValue(missDiff, 0, 25, 125);
+  return fitness;
+}
+
+function fitnessValue(v: number, min: number, center: number, max: number) {
+  if (v <= min || v >= max) {
+    return 0;
+  }
+  if (v < center) {
+    return (v - min) / (center - min) * 100;
   } else {
-    setTimeout(addFitnessToCode, 0);
+    return (max - v) / (max - center) * 100;
   }
 }
 
