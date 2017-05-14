@@ -5,9 +5,10 @@ import Random from './random';
 
 export default class Game {
   maxActorCount = 100;
-  actors: Actor[] = [];
+  actors: Actor[];
   codes: any = {};
   ticks = -1;
+  isAlive = true;
   score = 0;
   missCount = 0;
   isValid = true;
@@ -29,9 +30,10 @@ export default class Game {
       this.isAutoPressing = true;
       this.isKeyDown = _.times(256, () => false);
     }
+    this.update = this.update.bind(this);
   }
 
-  begin(gameCode = null) {
+  begin(gameCode) {
     if (gameCode != null) {
       const code = _.cloneDeep(gameCode);
       code.splice(0, 2); // Remove 'game', [name]
@@ -43,7 +45,19 @@ export default class Game {
         }
       });
     }
+    this.restart();
+    if (this.screen.hasDom) {
+      this.update();
+    }
+  }
+
+  restart() {
+    this.actors = [];
     this.addActor('stage');
+  }
+
+  end() {
+    this.isAlive = false;
   }
 
   addActor(name: string) {
@@ -62,6 +76,12 @@ export default class Game {
   }
 
   update() {
+    if (!this.isAlive) {
+      return;
+    }
+    if (this.screen.hasDom) {
+      requestAnimationFrame(this.update);
+    }
     this.ticks++;
     if (this.screen.hasDom && this.ticks % 10 > 0) {
       return;
@@ -99,7 +119,7 @@ export default class Game {
   miss() {
     this.actors = [];
     this.missCount++;
-    this.begin();
+    this.restart();
   }
 
   addScore(score = 1) {
@@ -109,8 +129,8 @@ export default class Game {
   diff(otherGame: Game) {
     let value = 0;
     value += this.screen.diff(otherGame.screen);
-    value += Math.abs(this.score - otherGame.score);
-    value += Math.abs(this.missCount - otherGame.missCount);
+    value += Math.sqrt(Math.abs(this.score - otherGame.score));
+    value += Math.sqrt(Math.abs(this.missCount - otherGame.missCount));
     return value;
   }
 }

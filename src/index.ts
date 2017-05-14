@@ -6,23 +6,45 @@ import Random from './random';
 
 window.onload = init;
 
+const codeCount = 100;
+const genCount = 5;
+const aliveRatio = 0.5;
 let baseCodeCount: number;
 let baseCodes: any[];
 let loadedBaseCodeCount = 0;
-const codeCount = 100;
-const codes = [];
-let isKeyDown = _.times(256, () => false);
+let codes: { code: any[], fitness: number }[];
+let codeIndex: number;
+let codeSeed: number;
+let genIndex: number;
 let random: Random;
+let isKeyDown = _.times(256, () => false);
+let currentGame: Game;
 
 function init() {
-  document.getElementById('status').textContent = 'generating...';
+  showInfo('loading...');
+  initEventHandlers();
+  loadGameList();
+}
+
+function initEventHandlers() {
   document.onkeydown = e => {
     isKeyDown[e.keyCode] = true;
   };
   document.onkeyup = e => {
     isKeyDown[e.keyCode] = false;
   };
-  loadGameList();
+  document.getElementById('prev').onclick = e => {
+    moveCodeIndex(-1);
+  };
+  document.getElementById('next').onclick = e => {
+    moveCodeIndex(1);
+  };
+  document.getElementById('restart').onclick = e => {
+    moveCodeIndex(0);
+  };
+  document.getElementById('regenerate').onclick = e => {
+    beginGenerating();
+  };
 }
 
 function loadGameList() {
@@ -47,7 +69,7 @@ function loadCode(name: string, index: number) {
     baseCodes[index] = parsed;
     loadedBaseCodeCount++;
     if (loadedBaseCodeCount >= baseCodeCount) {
-      start();
+      beginGenerating();
     }
   });
 }
@@ -61,37 +83,72 @@ function loadFile(name: string, callback: (name: string) => void) {
   };
 }
 
-function start() {
-  random = new Random();
-  //*
-  _.times(codeCount, i => {
-    codes.push(_.cloneDeep(baseCodes[i % baseCodeCount]));
+function beginGenerating(randomSeed: number = null) {
+  enableButtons(false);
+  if (currentGame != null) {
+    currentGame.end();
+  }
+  genIndex = 0;
+  showInfo(`generating... ${genIndex + 1} / ${genCount}`);
+  codeSeed = randomSeed != null ? randomSeed : new Random().getToMaxInt();
+  random = new Random().setSeed(codeSeed);
+  codes = _.times(codeCount, i => {
+    return {
+      code: _.cloneDeep(baseCodes[i % baseCodeCount]),
+      fitness: 0
+    };
   });
-  _.times(codeCount * 10, () => {
+  setTimeout(goToNextGen, 1);
+}
+
+function goToNextGen() {
+  _.times(codeCount * 3, () => {
     combine();
   });
-  const sortedCodes = sortCodes();
-  console.log(JSON.stringify(_.cloneDeep(sortedCodes[0].code), null, 2));
-  console.log(sortedCodes[0].fitness);
-  const game = new Game(new Screen(), isKeyDown);
-  game.begin(sortedCodes[0].code);
-  /*/
-  const game = new Game(new Screen(), isKeyDown);
-  game.begin(baseCodes[4]);
-  //*/
-  const updateFunc = () => {
-    requestAnimationFrame(updateFunc);
-    game.update();
-  };
-  updateFunc();
+  sortCodes();
+  genIndex++;
+  if (genIndex >= genCount) {
+    endGenerating();
+  } else {
+    const aliveCodeCount = Math.floor(codeCount * aliveRatio);
+    codes = _.times(codeCount, i => _.cloneDeep(codes[i % aliveCodeCount]));
+    showInfo(`generating... ${genIndex + 1} / ${genCount}`);
+    setTimeout(goToNextGen, 1);
+  }
+}
+
+function endGenerating() {
+  codeIndex = 0;
+  beginGame();
+}
+
+function moveCodeIndex(offset: number) {
+  enableButtons(false);
+  currentGame.end();
+  codeIndex += offset;
+  if (codeIndex < 0) {
+    codeIndex += codeCount;
+  } else if (codeIndex >= codeCount) {
+    codeIndex -= codeCount;
+  }
+  beginGame();
+}
+
+function beginGame() {
+  //console.log(JSON.stringify(_.cloneDeep(codes[codeIndex].code), null, 2));
+  const fitness = Math.floor(codes[codeIndex].fitness);
+  showInfo(`id: ${codeSeed}#${codeIndex} fitness: ${fitness}`);
+  currentGame = new Game(new Screen(), isKeyDown);
+  currentGame.begin(codes[codeIndex].code);
+  enableButtons();
 }
 
 function sortCodes() {
-  const scoredCodes = _.map(codes, code => {
-    const fitness = addFitnessToCode(code);
-    return { code, fitness };
+  const codesWithFitness = _.map(codes, c => {
+    const fitness = addFitnessToCode(c.code);
+    return { code: c.code, fitness };
   });
-  return _(scoredCodes).sortBy('fitness').reverse().value();
+  codes = _(codesWithFitness).sortBy('fitness').reverse().value();
 }
 
 function addFitnessToCode(code) {
@@ -119,8 +176,8 @@ function addFitnessToCode(code) {
 }
 
 function combine() {
-  const p1 = getCodePart(codes[random.getInt(codeCount)]);
-  const p2 = getCodePart(codes[random.getInt(codeCount)]);
+  const p1 = getCodePart(codes[random.getInt(codeCount)].code);
+  const p2 = getCodePart(codes[random.getInt(codeCount)].code);
   p1.parent.splice(p1.index, 0, _.cloneDeep(p2.parent[p2.index]));
   p2.parent.splice(p2.index, 1);
 }
@@ -143,4 +200,15 @@ function getCodePart(code: any[], targetDepth = 1, depth = 0) {
     return { parent: code, index: ci };
   }
   return getCodePart(part, targetDepth, depth + 1);
+}
+
+function enableButtons(isEnabled = true) {
+  const buttonIds = ['prev', 'next', 'restart', 'regenerate'];
+  _.forEach(buttonIds, id => {
+    (<HTMLButtonElement>document.getElementById(id)).disabled = !isEnabled;
+  });
+}
+
+function showInfo(text: string) {
+  document.getElementById('game_info').textContent = text;
 }

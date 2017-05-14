@@ -18,7 +18,7 @@ export default class Screen {
     }
     this.canvas = <HTMLCanvasElement>document.getElementById(domId);
     this.context = this.canvas.getContext('2d');
-    this.statusDom = document.getElementById('status');
+    this.statusDom = document.getElementById('playing_status');
   }
 
   clear() {
