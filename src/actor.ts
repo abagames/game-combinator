@@ -19,6 +19,7 @@ export default class Actor {
     'often': 0.1,
     'frequently': 0.2
   };
+  defaultFreqName = 'often';
   posNamePatterns = {
     'top_left': { x: 0, y: 0 },
     'bottom_left': { x: 0, y: 1 },
@@ -26,28 +27,34 @@ export default class Actor {
     'top_right': { x: 1, y: 0 },
     'bottom_right': { x: 1, y: 1 },
     'right_center': { x: 1, y: 0.5 },
+    'center': { x: 0.5, y: 0.5 },
     'top': { x: null, y: 0 },
     'bottom': { x: null, y: 1 },
     'left': { x: 0, y: null },
-    'right': { x: 1, y: null }
+    'right': { x: 1, y: null },
+    'any': { x: null, y: null }
   };
+  defaultPosName = 'any';
   keyNamePatterns = {
     'left': [65, 37],
     'right': [68, 39],
     'up': [87, 38],
     'down': [83, 40],
   };
+  defaultKeyName = 'right';
   angleNamePatterns = {
     'left': new Vector(-1, 0),
     'right': new Vector(1, 0),
     'up': new Vector(0, -1),
     'down': new Vector(0, 1)
   };
+  defaultAngleName = 'right';
   accelerateNamePatterns = {
     'fast': 0.1,
     'normal': 0.03,
     'slow': 0.01
   };
+  defaultAccelerateName = 'normal';
 
   constructor(public name: string, public code: any[], public game: Game) {
     this.screen = game.screen;
@@ -132,38 +139,37 @@ export default class Actor {
           break;
         case 'random':
           const freqName = this.parse(currentCode.shift());
-          const randomFreq = this.freqNamePatterns[freqName];
+          let randomFreq = this.freqNamePatterns[freqName];
           if (randomFreq == null) {
-            this.resultValue = false;
-          } else {
-            this.resultValue = this.game.random.get() < randomFreq;
+            randomFreq = this.freqNamePatterns[this.defaultFreqName];
           }
+          this.resultValue = this.game.random.get() < randomFreq;
           break;
         case 'interval':
           const intervalName = this.parse(currentCode.shift());
-          const intervalFreq = this.freqNamePatterns[intervalName];
+          let intervalFreq = this.freqNamePatterns[intervalName];
           if (intervalFreq == null) {
-            this.resultValue = false;
-          } else {
-            const it = Math.floor(1 / intervalFreq);
-            this.resultValue = this.ticks % it === 0;
+            intervalFreq = this.freqNamePatterns[this.defaultFreqName];
           }
+          const it = Math.floor(1 / intervalFreq);
+          this.resultValue = this.ticks % it === 0;
           break;
         case 'place':
           const posName = this.parse(currentCode.shift());
-          const pp = this.posNamePatterns[posName];
-          if (pp != null) {
-            if (pp.x == null) {
-              pp.x = this.game.random.get();
-            }
-            if (pp.y == null) {
-              pp.y = this.game.random.get();
-            }
-            this.pos.set(
-              Math.floor(pp.x * (this.screen.width - 0.01)),
-              Math.floor(pp.y * (this.screen.height - 0.01)));
-            this.prevPos.set(this.pos);
+          let pp = this.posNamePatterns[posName];
+          if (pp == null) {
+            pp = this.posNamePatterns[this.defaultPosName];
           }
+          if (pp.x == null) {
+            pp.x = this.game.random.get();
+          }
+          if (pp.y == null) {
+            pp.y = this.game.random.get();
+          }
+          this.pos.set(
+            Math.floor(pp.x * (this.screen.width - 0.01)),
+            Math.floor(pp.y * (this.screen.height - 0.01)));
+          this.prevPos.set(this.pos);
           break;
         case 'key':
           if (this.game.isKeyDown == null) {
@@ -171,8 +177,11 @@ export default class Actor {
             break;
           }
           const keyName = this.parse(currentCode.shift());
-          const kp: number[] = this.keyNamePatterns[keyName];
-          this.resultValue = (kp != null && _.some(kp, k => this.game.isKeyDown[k]));
+          let kp: number[] = this.keyNamePatterns[keyName];
+          if (kp == null) {
+            kp = this.keyNamePatterns[this.defaultKeyName];
+          }
+          this.resultValue = _.some(kp, k => this.game.isKeyDown[k]);
           break;
         case 'move':
           const moveName = this.parse(currentCode.shift());
@@ -180,11 +189,12 @@ export default class Actor {
             this.pos.set(this.prevPos.x, this.prevPos.y);
             break;
           }
-          const mp: Vector = this.angleNamePatterns[moveName];
-          if (mp != null) {
-            this.pos.x += mp.x;
-            this.pos.y += mp.y;
+          let mp: Vector = this.angleNamePatterns[moveName];
+          if (mp == null) {
+            mp = this.angleNamePatterns[this.defaultAngleName];
           }
+          this.pos.x += mp.x;
+          this.pos.y += mp.y;
           break;
         case 'touch':
           const targetName = this.parse(currentCode.shift());
@@ -192,17 +202,25 @@ export default class Actor {
           break;
         case 'accelerate':
           const angleName = this.parse(currentCode.shift());
+          if (angleName === 'bounce_horizontal') {
+            this.vel.x *= -1;
+            break;
+          }
           if (angleName === 'bounce_vertical') {
             this.vel.y *= -1;
             break;
           }
           const speedName = this.parse(currentCode.shift());
-          const ap = this.angleNamePatterns[angleName];
-          const sp = this.accelerateNamePatterns[speedName];
-          if (ap != null && sp != null) {
-            this.vel.x += ap.x * sp;
-            this.vel.y += ap.y * sp;
+          let ap = this.angleNamePatterns[angleName];
+          if (ap == null) {
+            ap = this.angleNamePatterns[this.defaultAngleName];
           }
+          let sp = this.accelerateNamePatterns[speedName];
+          if (sp == null) {
+            sp = this.accelerateNamePatterns[this.defaultAccelerateName];
+          }
+          this.vel.x += ap.x * sp;
+          this.vel.y += ap.y * sp;
           break;
         case 'freeze':
           this.isFreezing = true;
