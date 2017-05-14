@@ -13,6 +13,7 @@ const fitnessCalcTicks = 100;
 let baseCodeCount: number;
 let baseCodeNames: string[];
 let baseCodes: any[];
+let baseCodesDiffParams: any;
 let loadedBaseCodeCount = 0;
 let codeSeed: number;
 let codes: { code: any[], fitness: number }[];
@@ -71,6 +72,7 @@ function loadCode(name: string, index: number) {
     baseCodes[index] = parsed;
     loadedBaseCodeCount++;
     if (loadedBaseCodeCount >= baseCodeCount) {
+      calcBaseCodesDiffParams();
       beginGenerating();
       //beginBaseGame('fire.gc');
     }
@@ -174,16 +176,32 @@ function addFitnessToCode() {
   }
 }
 
+const diffParams = ['screen', 'score', 'miss'];
+
 function calcFitness(code: any[]) {
+  const diff = calcDiff(code);
+  if (diff == null) {
+    return 0;
+  }
+  let fitness = 0;
+  _.forEach(diffParams, p => {
+    const dp = baseCodesDiffParams[p];
+    fitness += fitnessValue(diff[p], dp.min, dp.average, dp.max);
+  });
+  return fitness;
+}
+
+function calcDiff(code: any[]) {
   const gameCount = 8;
   const games = _.times(gameCount, i => {
     const game = new Game(new Screen(null), null, 0, i);
     game.begin(code);
     return game;
   });
-  let screenDiff = 0;
-  let scoreDiff = 0;
-  let missDiff = 0;
+  const result: any = {};
+  _.forEach(diffParams, p => {
+    result[p] = 0;
+  });
   for (let i = 0; i < fitnessCalcTicks; i++) {
     let isValid = true;
     _.forEach(games, game => {
@@ -194,25 +212,51 @@ function calcFitness(code: any[]) {
       }
     });
     if (!isValid) {
-      return 0;
+      return null;
     }
     for (let j = 0; j < gameCount - 1; j++) {
       for (let k = j + 1; k < gameCount; k++) {
         const diff = games[j].diff(games[k]);
-        screenDiff += diff.screen;
-        scoreDiff += diff.score;
-        missDiff += diff.miss;
+        _.forEach(diffParams, p => {
+          result[p] += diff[p];
+        });
       }
     }
   }
-  //console.log(screenDiff);
-  //console.log(scoreDiff);
-  //console.log(missDiff);
-  let fitness = 0;
-  fitness += fitnessValue(screenDiff, 15000, 100000, 200000);
-  fitness += fitnessValue(scoreDiff, 0, 100, 300);
-  fitness += fitnessValue(missDiff, 0, 25, 125);
-  return fitness;
+  return result;
+}
+
+function calcBaseCodesDiffParams() {
+  baseCodesDiffParams = {};
+  _.forEach(diffParams, p => {
+    baseCodesDiffParams[p] = {};
+    baseCodesDiffParams[p].min = 9999999;
+    baseCodesDiffParams[p].max = 0;
+    baseCodesDiffParams[p].average = 0;
+  });
+  let codeCount = 0;
+  _.forEach(baseCodes, c => {
+    const diff = calcDiff(c);
+    if (diff == null) {
+      return;
+    }
+    _.forEach(diffParams, p => {
+      const r = baseCodesDiffParams[p];
+      const d = diff[p];
+      if (d < r.min) {
+        r.min = d;
+      }
+      if (d > r.max) {
+        r.max = d;
+      }
+      r.average += d;
+      codeCount++;
+    });
+  });
+  _.forEach(diffParams, p => {
+    baseCodesDiffParams[p].average /= codeCount;
+  });
+  return baseCodesDiffParams;
 }
 
 function fitnessValue(v: number, min: number, center: number, max: number) {
