@@ -6,22 +6,23 @@ import Random from './random';
 
 window.onload = init;
 
-const codeCount = 100;
+const codeCount = 250;
 const genCount = 5;
-const aliveRatio = 0.5;
+const aliveRatio = 0.25;
 let baseCodeCount: number;
 let baseCodes: any[];
 let loadedBaseCodeCount = 0;
+let codeSeed: number;
 let codes: { code: any[], fitness: number }[];
 let codeIndex: number;
-let codeSeed: number;
+let codesWithFitness: { code: any[], fitness: number }[];
+let fitnessIndex: number;
 let genIndex: number;
 let random: Random;
 let isKeyDown = _.times(256, () => false);
 let currentGame: Game;
 
 function init() {
-  showInfo('loading...');
   initEventHandlers();
   loadGameList();
 }
@@ -89,7 +90,6 @@ function beginGenerating(randomSeed: number = null) {
     currentGame.end();
   }
   genIndex = 0;
-  showInfo(`generating... ${genIndex + 1} / ${genCount}`);
   codeSeed = randomSeed != null ? randomSeed : new Random().getToMaxInt();
   random = new Random().setSeed(codeSeed);
   codes = _.times(codeCount, i => {
@@ -99,22 +99,6 @@ function beginGenerating(randomSeed: number = null) {
     };
   });
   setTimeout(goToNextGen, 1);
-}
-
-function goToNextGen() {
-  _.times(codeCount * 3, () => {
-    combine();
-  });
-  sortCodes();
-  genIndex++;
-  if (genIndex >= genCount) {
-    endGenerating();
-  } else {
-    const aliveCodeCount = Math.floor(codeCount * aliveRatio);
-    codes = _.times(codeCount, i => _.cloneDeep(codes[i % aliveCodeCount]));
-    showInfo(`generating... ${genIndex + 1} / ${genCount}`);
-    setTimeout(goToNextGen, 1);
-  }
 }
 
 function endGenerating() {
@@ -143,21 +127,40 @@ function beginGame() {
   enableButtons();
 }
 
-function sortCodes() {
-  const codesWithFitness = _.map(codes, c => {
-    const fitness = addFitnessToCode(c.code);
-    return { code: c.code, fitness };
+function goToNextGen() {
+  _.times(codeCount * 3, () => {
+    combine();
   });
-  codes = _(codesWithFitness).sortBy('fitness').reverse().value();
+  sortCodes();
 }
 
-function addFitnessToCode(code) {
+function sortCodes() {
+  codesWithFitness = [];
+  fitnessIndex = 0;
+  setTimeout(addFitnessToCode, 1);
+}
+
+function endSortingCodes() {
+  codes = _(codesWithFitness).sortBy('fitness').reverse().value();
+  genIndex++;
+  if (genIndex >= genCount) {
+    endGenerating();
+  } else {
+    const aliveCodeCount = Math.floor(codeCount * aliveRatio);
+    codes = _.times(codeCount, i => _.cloneDeep(codes[i % aliveCodeCount]));
+    setTimeout(goToNextGen, 1);
+  }
+}
+
+function addFitnessToCode() {
+  showInfo(`generating... ${genIndex + 1} / ${genCount} : ${fitnessIndex} / ${codeCount}`);
+  const code = codes[fitnessIndex].code;
   const games = _.times(2, i => {
     const game = new Game(new Screen(null), null, 0, i);
     game.begin(code);
     return game;
   });
-  let score = 0;
+  let fitness = 0;
   for (let i = 0; i < 100; i++) {
     let isValid = true;
     _.forEach(games, game => {
@@ -168,11 +171,18 @@ function addFitnessToCode(code) {
       }
     });
     if (!isValid) {
-      return 0;
+      fitness = 0;
+      break;
     }
-    score += games[0].diff(games[1]);
+    fitness += games[0].diff(games[1]);
   }
-  return score;
+  codesWithFitness.push({ code, fitness });
+  fitnessIndex++;
+  if (fitnessIndex >= codeCount) {
+    endSortingCodes();
+  } else {
+    setTimeout(addFitnessToCode, 0);
+  }
 }
 
 function combine() {
