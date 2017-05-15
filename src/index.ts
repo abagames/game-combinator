@@ -7,6 +7,7 @@ import Random from './random';
 window.onload = init;
 
 const codeCount = 250;
+const crossoverCount = 1;
 const genCount = 5;
 const aliveRatio = 0.25;
 const fitnessCalcTicks = 100;
@@ -139,26 +140,39 @@ function beginGame() {
 }
 
 function goToNextGen() {
-  _.times(codeCount * 3, () => {
-    combine();
+  _.times(codeCount * crossoverCount, i => {
+    crossover(i % codeCount);
   });
-  sortCodes();
+  selectCodes();
 }
 
-function sortCodes() {
+function selectCodes() {
   codesWithFitness = [];
   fitnessIndex = 0;
   setTimeout(addFitnessToCode, 1);
 }
 
-function endSortingCodes() {
-  codes = _(codesWithFitness).sortBy('fitness').reverse().value();
+function endSelectingCodes() {
   genIndex++;
   if (genIndex >= genCount) {
+    codes = _(codesWithFitness).sortBy('fitness').reverse().value();
     endGenerating();
   } else {
     const aliveCodeCount = Math.floor(codeCount * aliveRatio);
-    codes = _.times(codeCount, i => _.cloneDeep(codes[i % aliveCodeCount]));
+    let ci = 0;
+    _.times(codeCount - aliveCodeCount, () => {
+      let nci = ci + 1;
+      if (nci >= codesWithFitness.length) {
+        nci = 0;
+      }
+      const si = (codesWithFitness[ci].fitness > codesWithFitness[nci].fitness) ? nci : ci;
+      codesWithFitness.splice(si, 1);
+      ci++;
+      if (ci >= codesWithFitness.length) {
+        ci = 0;
+      }
+    });
+    codes = _.times(codeCount, i => _.cloneDeep(codesWithFitness[i % aliveCodeCount]));
     setTimeout(goToNextGen, 1);
   }
 }
@@ -170,7 +184,7 @@ function addFitnessToCode() {
   codesWithFitness.push({ code, fitness });
   fitnessIndex++;
   if (fitnessIndex >= codeCount) {
-    endSortingCodes();
+    endSelectingCodes();
   } else {
     setTimeout(addFitnessToCode, 0);
   }
@@ -186,7 +200,7 @@ function calcFitness(code: any[]) {
   let fitness = 0;
   _.forEach(diffParams, p => {
     const dp = baseCodesDiffParams[p];
-    fitness += fitnessValue(diff[p], dp.min, dp.average, dp.max);
+    fitness += fitnessValue(diff[p], dp.min, dp.median, dp.max);
   });
   return fitness;
 }
@@ -230,9 +244,7 @@ function calcBaseCodesDiffParams() {
   baseCodesDiffParams = {};
   _.forEach(diffParams, p => {
     baseCodesDiffParams[p] = {};
-    baseCodesDiffParams[p].min = 9999999;
-    baseCodesDiffParams[p].max = 0;
-    baseCodesDiffParams[p].average = 0;
+    baseCodesDiffParams[p].values = [];
   });
   let codeCount = 0;
   _.forEach(baseCodes, c => {
@@ -241,20 +253,16 @@ function calcBaseCodesDiffParams() {
       return;
     }
     _.forEach(diffParams, p => {
-      const r = baseCodesDiffParams[p];
-      const d = diff[p];
-      if (d < r.min) {
-        r.min = d;
-      }
-      if (d > r.max) {
-        r.max = d;
-      }
-      r.average += d;
-      codeCount++;
+      baseCodesDiffParams[p].values.push(diff[p]);
     });
   });
   _.forEach(diffParams, p => {
-    baseCodesDiffParams[p].average /= codeCount;
+    const dp = baseCodesDiffParams[p];
+    const vs = dp.values;
+    const svs = _.sortBy(vs);
+    dp.min = svs[0];
+    dp.median = svs[Math.floor(svs.length / 2)];
+    dp.max = svs[svs.length - 1];
   });
   return baseCodesDiffParams;
 }
@@ -270,8 +278,8 @@ function fitnessValue(v: number, min: number, center: number, max: number) {
   }
 }
 
-function combine() {
-  const p1 = getCodePart(codes[random.getInt(codeCount)].code);
+function crossover(codeIndex: number) {
+  const p1 = getCodePart(codes[codeIndex].code);
   const p2 = getCodePart(codes[random.getInt(codeCount)].code);
   p1.parent.splice(p1.index, 0, _.cloneDeep(p2.parent[p2.index]));
   p2.parent.splice(p2.index, 1);
