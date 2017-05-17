@@ -63,7 +63,7 @@ function loadGameList() {
 }
 
 function loadCode(name: string, index: number) {
-  loadFile(name, text => {
+  loadFile(`codes/${name}`, text => {
     const parsed = parseSE(text);
     if (parsed instanceof Error) {
       const err: any = parsed;
