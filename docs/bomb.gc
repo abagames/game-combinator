@@ -1,33 +1,17 @@
 (game bomb
   (actor stage
     (if initial (spawn player))
-    (if (random frequently) (spawn enemy))
+    (if (random often) (spawn enemy))
   )
   (actor player
     (if initial (place top_left))
-    (if (key down) (spawn shot))
+    (if (key down) (
+      (if (not_exists shot) (spawn shot))
+    ))
     (move right)
     (if (touch out_of_screen_right) (place top_left))
     (if (touch enemy) miss)
-  )
-  (actor enemy
-    (if initial (
-      (place top)
-      (move down)
-      (if (touch enemy) (
-        (move up)
-        freeze
-      ))
-    ))
-    (move down)
-    (if (touch enemy) (
-      (move up)
-      freeze
-    ))
-    (if (touch out_of_screen) (
-      (move up)
-      freeze
-    ))
+    (if (touch bullet) miss)
   )
   (actor shot
     (move down)
@@ -38,4 +22,18 @@
     ))
     (if (touch out_of_screen) remove)
   )
+  (actor enemy
+    (if initial (place bottom))
+    (if (random often) (
+      (spawn bullet)
+      (move up)
+    ))
+    (if (touch shot) (
+      score
+      remove
+      remove_touched
+    ))
+    (if (touch out_of_screen) remove)
+  )
+  (actor bullet)
 )

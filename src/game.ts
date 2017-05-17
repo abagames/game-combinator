@@ -75,6 +75,10 @@ export default class Game {
     return actor;
   }
 
+  getActors(name: string) {
+    return _.filter(this.actors, a => a.name === name);
+  }
+
   update() {
     if (!this.isAlive) {
       return;

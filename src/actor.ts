@@ -10,7 +10,6 @@ export default class Actor {
   resultValue: any;
   touchedActor: Actor;
   isAlive = true;
-  isFreezing = false;
   ticks = 0;
   colorIndex = -1;
   parseCount = 0;
@@ -66,12 +65,10 @@ export default class Actor {
   update() {
     this.prevPos.set(this.pos);
     this.parseCount = 0;
-    if (!this.isFreezing) {
-      this.pos.x += this.vel.x;
-      this.pos.y += this.vel.y;
-      this.vel.x *= 0.99;
-      this.vel.y *= 0.99;
-    }
+    this.pos.x += this.vel.x;
+    this.pos.y += this.vel.y;
+    this.vel.x *= 0.99;
+    this.vel.y *= 0.99;
     this.parse(_.cloneDeep(this.code));
     this.screen.setPoint(this.pos.x, this.pos.y, this.colorIndex);
     if (this.pos.x < -this.screen.width * 0.5 ||
@@ -128,6 +125,10 @@ export default class Actor {
           break;
         case 'initial':
           this.resultValue = this.ticks === 0;
+          break;
+        case 'not_exists':
+          const neActorName = this.parse(currentCode.shift());
+          this.resultValue = this.game.getActors(neActorName).length <= 0;
           break;
         case 'spawn':
           const actorName = this.parse(currentCode.shift());
@@ -220,9 +221,6 @@ export default class Actor {
           }
           this.vel.x += ap.x * sp;
           this.vel.y += ap.y * sp;
-          break;
-        case 'freeze':
-          this.isFreezing = true;
           break;
         case 'miss':
           this.game.miss();
