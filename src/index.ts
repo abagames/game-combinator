@@ -8,8 +8,8 @@ window.onload = init;
 
 const codeCount = 250;
 const crossoverCount = 1;
-const genCount = 5;
-const aliveRatio = 0.25;
+const genCount = 10;
+const aliveRatio = 0.5;
 const fitnessCalcTicks = 100;
 let baseCodeCount: number;
 let baseCodeNames: string[];
