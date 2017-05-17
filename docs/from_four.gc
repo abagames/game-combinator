@@ -1,0 +1,42 @@
+(game from_four
+  (actor stage
+    (if initial (spawn player))
+    (if (random frequently) (spawn bullet))
+  )
+  (actor player
+    (if initial (place center))
+    (if (key left) (move left))
+    (if (key right) (move right))
+    (if (key up) (move up))
+    (if (key down) (move down))
+    (if (touch out_of_screen) (move step_bak))
+    (if (touch bullet) miss)
+  )
+  (actor bullet
+    (if initial
+      (select
+        (
+          (place top)
+          (accelerate down very_fast)
+        )
+        (
+          (place bottom)
+          (accelerate up very_fast)
+        )
+        (
+          (place left)
+          (accelerate right very_fast)
+        )
+        (
+          (place right)
+          (accelerate left very_fast)
+        )
+      )
+    )
+    (if (touch player) miss)
+    (if (touch out_of_screen) (
+      score
+      remove
+    ))
+  )
+)

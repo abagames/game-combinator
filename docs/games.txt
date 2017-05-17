@@ -4,3 +4,4 @@ flap.gc
 defend.gc
 pooy.gc
 bomb.gc
+from_four.gc

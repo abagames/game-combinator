@@ -48,6 +48,7 @@ export default class Actor {
   };
   defaultAngleName = 'right';
   accelerateNamePatterns = {
+    'very_fast': 0.3,
     'fast': 0.1,
     'normal': 0.03,
     'slow': 0.01
@@ -130,13 +131,6 @@ export default class Actor {
           const neActorName = this.parse(currentCode.shift());
           this.resultValue = this.game.getActors(neActorName).length <= 0;
           break;
-        case 'spawn':
-          const actorName = this.parse(currentCode.shift());
-          const actor = this.game.addActor(actorName);
-          if (actor != null) {
-            actor.pos.set(this.pos);
-          }
-          break;
         case 'random':
           const freqName = this.parse(currentCode.shift());
           let randomFreq = this.freqNamePatterns[freqName];
@@ -153,6 +147,34 @@ export default class Actor {
           }
           const it = Math.floor(1 / intervalFreq);
           this.resultValue = this.ticks % it === 0;
+          break;
+        case 'key':
+          if (this.game.isKeyDown == null) {
+            this.resultValue = false;
+            break;
+          }
+          const keyName = this.parse(currentCode.shift());
+          let kp: number[] = this.keyNamePatterns[keyName];
+          if (kp == null) {
+            kp = this.keyNamePatterns[this.defaultKeyName];
+          }
+          this.resultValue = _.some(kp, k => this.game.isKeyDown[k]);
+          break;
+        case 'touch':
+          const targetName = this.parse(currentCode.shift());
+          this.resultValue = this.checkTouch(targetName);
+          break;
+        case 'select':
+          const selectedIndex = this.game.random.getInt(currentCode.length);
+          this.parse(currentCode[selectedIndex]);
+          currentCode = [];
+          break;
+        case 'spawn':
+          const actorName = this.parse(currentCode.shift());
+          const actor = this.game.addActor(actorName);
+          if (actor != null) {
+            actor.pos.set(this.pos);
+          }
           break;
         case 'place':
           const posName = this.parse(currentCode.shift());
@@ -171,18 +193,6 @@ export default class Actor {
             Math.floor(pp.y * (this.screen.height - 0.01)));
           this.prevPos.set(this.pos);
           break;
-        case 'key':
-          if (this.game.isKeyDown == null) {
-            this.resultValue = false;
-            break;
-          }
-          const keyName = this.parse(currentCode.shift());
-          let kp: number[] = this.keyNamePatterns[keyName];
-          if (kp == null) {
-            kp = this.keyNamePatterns[this.defaultKeyName];
-          }
-          this.resultValue = _.some(kp, k => this.game.isKeyDown[k]);
-          break;
         case 'move':
           const moveName = this.parse(currentCode.shift());
           if (moveName === 'step_back') {
@@ -195,10 +205,6 @@ export default class Actor {
           }
           this.pos.x += mp.x;
           this.pos.y += mp.y;
-          break;
-        case 'touch':
-          const targetName = this.parse(currentCode.shift());
-          this.resultValue = this.checkTouch(targetName);
           break;
         case 'accelerate':
           const angleName = this.parse(currentCode.shift());
@@ -222,12 +228,6 @@ export default class Actor {
           this.vel.x += ap.x * sp;
           this.vel.y += ap.y * sp;
           break;
-        case 'miss':
-          this.game.miss();
-          break;
-        case 'score':
-          this.game.addScore();
-          break;
         case 'remove':
           this.remove();
           break;
@@ -235,6 +235,12 @@ export default class Actor {
           if (this.touchedActor != null) {
             this.touchedActor.remove();
           }
+          break;
+        case 'miss':
+          this.game.miss();
+          break;
+        case 'score':
+          this.game.addScore();
           break;
         default:
           this.resultValue = c;
