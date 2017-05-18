@@ -1,0 +1,42 @@
+(game road
+  (actor stage
+    (if initial (spawn player))
+    (if initial (spawn enemy))
+  )
+  (actor player
+    (if initial (place bottom_center))
+    (if (key left) (accelerate left very_fast))
+    (if (key right) (accelerate right very_fast))
+    (accelerate slow_down)
+    (if (touch out_of_screen) (
+      (move step_back)
+      (accelerate bounce_horizontal)
+    ))
+    score
+    (if (touch shot) miss)
+    (if (touch bullet) miss)
+  )
+  (actor enemy
+    (if initial (place top_center))
+    (if (random frequently) (accelerate left fast))
+    (if (random frequently) (accelerate right fast))
+    (if (touch out_of_screen) (
+      (move step_back)
+      (accelerate bounce_horizontal)
+    ))
+    (spawn shot)
+    (spawn bullet)
+  )
+  (actor shot
+    (if initial (accelerate left very_fast))
+    (move down)
+    (if (random often) (accelerate slow_down))
+    (if (touch out_of_screen) remove)
+  )
+  (actor bullet
+    (if initial (accelerate right very_fast))
+    (move down)
+    (if (random often) (accelerate slow_down))
+    (if (touch out_of_screen) remove)
+  )
+)

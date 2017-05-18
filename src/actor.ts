@@ -26,6 +26,8 @@ export default class Actor {
     'top_right': { x: 1, y: 0 },
     'bottom_right': { x: 1, y: 1 },
     'right_center': { x: 1, y: 0.5 },
+    'top_center': { x: 0.5, y: 0 },
+    'bottom_center': { x: 0.5, y: 1 },
     'center': { x: 0.5, y: 0.5 },
     'top': { x: null, y: 0 },
     'bottom': { x: null, y: 1 },
@@ -214,6 +216,15 @@ export default class Actor {
           }
           if (angleName === 'bounce_vertical') {
             this.vel.y *= -1;
+            break;
+          }
+          if (angleName === 'stop') {
+            this.vel.set(0, 0);
+            break;
+          }
+          if (angleName === 'slow_down') {
+            this.vel.x *= 0.9;
+            this.vel.y *= 0.9;
             break;
           }
           const speedName = this.parse(currentCode.shift());
