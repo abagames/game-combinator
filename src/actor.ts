@@ -53,9 +53,18 @@ export default class Actor {
     'very_fast': 0.3,
     'fast': 0.1,
     'normal': 0.03,
-    'slow': 0.01
+    'slow': 0.01,
+    'very_slow': 0.003
   };
   defaultAccelerateName = 'normal';
+  moveNamePatterns = {
+    'very_fast': 3,
+    'fast': 2,
+    'normal': 1,
+    'slow': 0.5,
+    'very_slow': 0.25
+  };
+  defaultMoveName = 'normal';
 
   constructor(public name: string, public code: any[], public game: Game) {
     this.screen = game.screen;
@@ -134,21 +143,18 @@ export default class Actor {
           this.resultValue = this.game.getActors(neActorName).length <= 0;
           break;
         case 'random':
-          const freqName = this.parse(currentCode.shift());
-          let randomFreq = this.freqNamePatterns[freqName];
-          if (randomFreq == null) {
-            randomFreq = this.freqNamePatterns[this.defaultFreqName];
-          }
-          this.resultValue = this.game.random.get() < randomFreq;
-          break;
         case 'interval':
-          const intervalName = this.parse(currentCode.shift());
-          let intervalFreq = this.freqNamePatterns[intervalName];
-          if (intervalFreq == null) {
-            intervalFreq = this.freqNamePatterns[this.defaultFreqName];
+          const freqName = this.parse(currentCode.shift());
+          let freq = this.freqNamePatterns[freqName];
+          if (freq == null) {
+            freq = this.freqNamePatterns[this.defaultFreqName];
           }
-          const it = Math.floor(1 / intervalFreq);
-          this.resultValue = this.ticks % it === 0;
+          if (c === 'random') {
+            this.resultValue = this.game.random.get() < freq;
+          } else {
+            const it = Math.floor(1 / freq);
+            this.resultValue = this.ticks % it === 0;
+          }
           break;
         case 'key':
           if (this.game.isKeyDown == null) {
@@ -196,48 +202,10 @@ export default class Actor {
           this.prevPos.set(this.pos);
           break;
         case 'move':
-          const moveName = this.parse(currentCode.shift());
-          if (moveName === 'step_back') {
-            this.pos.set(this.prevPos.x, this.prevPos.y);
-            break;
-          }
-          let mp: Vector = this.angleNamePatterns[moveName];
-          if (mp == null) {
-            mp = this.angleNamePatterns[this.defaultAngleName];
-          }
-          this.pos.x += mp.x;
-          this.pos.y += mp.y;
+          this.move(currentCode);
           break;
         case 'accelerate':
-          const angleName = this.parse(currentCode.shift());
-          if (angleName === 'bounce_horizontal') {
-            this.vel.x *= -1;
-            break;
-          }
-          if (angleName === 'bounce_vertical') {
-            this.vel.y *= -1;
-            break;
-          }
-          if (angleName === 'stop') {
-            this.vel.set(0, 0);
-            break;
-          }
-          if (angleName === 'slow_down') {
-            this.vel.x *= 0.9;
-            this.vel.y *= 0.9;
-            break;
-          }
-          const speedName = this.parse(currentCode.shift());
-          let ap = this.angleNamePatterns[angleName];
-          if (ap == null) {
-            ap = this.angleNamePatterns[this.defaultAngleName];
-          }
-          let sp = this.accelerateNamePatterns[speedName];
-          if (sp == null) {
-            sp = this.accelerateNamePatterns[this.defaultAccelerateName];
-          }
-          this.vel.x += ap.x * sp;
-          this.vel.y += ap.y * sp;
+          this.accelerate(currentCode);
           break;
         case 'remove':
           this.remove();
@@ -293,6 +261,57 @@ export default class Actor {
       case 'out_of_screen_right':
         return this.pos.y >= 0 && this.pos.y < sh && this.pos.x >= sw;
     }
+  }
+
+  move(currentCode: any[]) {
+    const moveName = this.parse(currentCode.shift());
+    if (moveName === 'step_back') {
+      this.pos.set(this.prevPos.x, this.prevPos.y);
+      return;
+    }
+    let mp: Vector = this.angleNamePatterns[moveName];
+    if (mp == null) {
+      mp = this.angleNamePatterns[this.defaultAngleName];
+    }
+    const speedName = this.parse(currentCode.shift());
+    let speed = this.moveNamePatterns[speedName];
+    if (speed == null) {
+      speed = this.moveNamePatterns[this.defaultMoveName];
+    }
+    this.pos.x += mp.x * speed;
+    this.pos.y += mp.y * speed;
+  }
+
+  accelerate(currentCode: any[]) {
+    const angleName = this.parse(currentCode.shift());
+    if (angleName === 'bounce_horizontal') {
+      this.vel.x *= -1;
+      return;
+    }
+    if (angleName === 'bounce_vertical') {
+      this.vel.y *= -1;
+      return;
+    }
+    if (angleName === 'stop') {
+      this.vel.set(0, 0);
+      return;
+    }
+    if (angleName === 'slow_down') {
+      this.vel.x *= 0.9;
+      this.vel.y *= 0.9;
+      return;
+    }
+    let ap = this.angleNamePatterns[angleName];
+    if (ap == null) {
+      ap = this.angleNamePatterns[this.defaultAngleName];
+    }
+    const speedName = this.parse(currentCode.shift());
+    let sp = this.accelerateNamePatterns[speedName];
+    if (sp == null) {
+      sp = this.accelerateNamePatterns[this.defaultAccelerateName];
+    }
+    this.vel.x += ap.x * sp;
+    this.vel.y += ap.y * sp;
   }
 }
 
