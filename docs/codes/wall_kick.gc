@@ -1,0 +1,31 @@
+(game wall_kick
+  (actor stage
+    (if initial (spawn player))
+    (if (random frequently) (spawn enemy))
+  )
+  (actor player
+    (if initial (
+      (place bottom_center)
+      (accelerate right very_fast)      
+      (accelerate right very_fast)      
+    ))
+    (if (key left) (move left very_slow))
+    (if (key right) (move right very_slow))
+    (if (touch enemy) miss)
+    (if (touch out_of_screen_right) (
+      score
+      (move step_back)
+      (accelerate bounce_horizontal)
+    ))
+    (if (touch out_of_screen_left) (
+      score
+      (move step_back)
+      (accelerate bounce_horizontal)
+    ))
+  )
+  (actor enemy
+    (if initial (place top))
+    (move down)
+    (if (touch out_of_screen) remove)
+  )
+)
