@@ -6,9 +6,9 @@ import Random from './random';
 export default class Game {
   maxActorCount = 100;
   actors: Actor[];
+  originalCode: any = {};
   codes: any = {};
   ticks = -1;
-  isAlive = true;
   score = 0;
   missCount = 0;
   isValid = true;
@@ -34,21 +34,17 @@ export default class Game {
   }
 
   begin(gameCode) {
-    if (gameCode != null) {
-      const code = _.cloneDeep(gameCode);
-      code.splice(0, 2); // Remove 'game', [name]
-      _.forEach(code, ac => {
-        const name = ac[1];
-        if (_.some(this.actorNames, an => an === name)) {
-          ac.splice(0, 2); // Remove 'actor', [name]
-          this.codes[name] = ac;
-        }
-      });
-    }
+    this.originalCode = _.cloneDeep(gameCode);
+    const code = _.cloneDeep(gameCode);
+    code.splice(0, 2); // Remove 'game', [name]
+    _.forEach(code, ac => {
+      const name = ac[1];
+      if (_.some(this.actorNames, an => an === name)) {
+        ac.splice(0, 2); // Remove 'actor', [name]
+        this.codes[name] = ac;
+      }
+    });
     this.restart();
-    if (this.screen.hasDom) {
-      this.update();
-    }
   }
 
   restart() {
@@ -57,7 +53,7 @@ export default class Game {
   }
 
   end() {
-    this.isAlive = false;
+    this.screen.remove();
   }
 
   addActor(name: string) {
@@ -80,12 +76,7 @@ export default class Game {
   }
 
   update() {
-    if (!this.isAlive) {
-      return;
-    }
-    if (this.screen.hasDom) {
-      requestAnimationFrame(this.update);
-    } else {
+    if (!this.screen.hasDom) {
       this.score = this.missCount = 0;
     }
     this.ticks++;
@@ -138,10 +129,5 @@ export default class Game {
       score: Math.abs(this.score - otherGame.score),
       miss: Math.abs(this.missCount - otherGame.missCount)
     };
-    /*let value = 0;
-    value += Math.sqrt(this.screen.diff(otherGame.screen));
-    value += Math.sqrt(Math.abs(this.score - otherGame.score));
-    value += Math.sqrt(Math.abs(this.missCount - otherGame.missCount));
-    return value;*/
   }
 }

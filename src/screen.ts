@@ -3,22 +3,38 @@ import * as _ from 'lodash';
 export default class Screen {
   canvas: HTMLCanvasElement;
   context: CanvasRenderingContext2D;
-  hasDom = true;
   pixels: number[][];
   colorPatterns = [
     '#8f8', '#f88', '#88f', '#f8f'
   ];
   statusDom: HTMLElement;
+  likedCheckBox: HTMLInputElement;
 
-  constructor(domId = 'main', public width = 15, public height = 15) {
+  constructor(public hasDom = true, public width = 15, public height = 15) {
     this.pixels = _.times(width, () => _.times(height, () => -1));
-    if (domId == null) {
-      this.hasDom = false;
+    if (!hasDom) {
       return;
     }
-    this.canvas = <HTMLCanvasElement>document.getElementById(domId);
+    this.canvas = <HTMLCanvasElement>document.createElement('canvas');
+    this.canvas.width = width;
+    this.canvas.height = height;
+    this.canvas.style.cssText = `
+width: 100px;
+height: 100px;
+background: white;
+image-rendering: -moz-crisp-edges;
+image-rendering: -webkit-optimize-contrast;
+image-rendering: -o-crisp-edges;
+image-rendering: pixelated;
+    `;
     this.context = this.canvas.getContext('2d');
-    this.statusDom = document.getElementById('playing_status');
+    document.body.appendChild(this.canvas);
+    this.statusDom = document.createElement('span');
+    document.body.appendChild(this.statusDom);
+    this.likedCheckBox = document.createElement('input');
+    this.likedCheckBox.type = 'checkbox';
+    this.likedCheckBox.checked = true;
+    document.body.appendChild(this.likedCheckBox);
   }
 
   clear() {
@@ -63,5 +79,11 @@ export default class Screen {
       return;
     }
     this.statusDom.textContent = text;
+  }
+
+  remove() {
+    document.body.removeChild(this.canvas);
+    document.body.removeChild(this.statusDom);
+    document.body.removeChild(this.likedCheckBox);
   }
 }

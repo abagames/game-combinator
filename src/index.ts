@@ -6,10 +6,9 @@ import Random from './random';
 
 window.onload = init;
 
-const codeCount = 250;
-const crossoverCount = 1;
-const genCount = 10;
-const aliveRatio = 0.5;
+const codeCount = 100;
+const aliveCount = 10;
+const crossoverCount = 5;
 const fitnessCalcTicks = 100;
 let baseCodeCount: number;
 let baseCodeNames: string[];
@@ -24,7 +23,8 @@ let fitnessIndex: number;
 let genIndex: number;
 let random: Random;
 let isKeyDown = _.times(256, () => false);
-let currentGame: Game;
+let games: Game[];
+let isGamesBegun = false;
 
 function init() {
   initEventHandlers();
@@ -38,17 +38,8 @@ function initEventHandlers() {
   document.onkeyup = e => {
     isKeyDown[e.keyCode] = false;
   };
-  document.getElementById('prev').onclick = e => {
-    moveCodeIndex(-1);
-  };
   document.getElementById('next').onclick = e => {
-    moveCodeIndex(1);
-  };
-  document.getElementById('restart').onclick = e => {
-    moveCodeIndex(0);
-  };
-  document.getElementById('regenerate').onclick = e => {
-    beginGenerating();
+    goToNextGeneration();
   };
 }
 
@@ -98,45 +89,76 @@ function beginBaseGame(name: string) {
 
 function beginGenerating(randomSeed: number = null) {
   enableButtons(false);
-  if (currentGame != null) {
-    currentGame.end();
-  }
   genIndex = 0;
   codeSeed = randomSeed != null ? randomSeed : new Random().getToMaxInt();
   random = new Random().setSeed(codeSeed);
+  const codeOffset = random.getInt(baseCodeCount);
   codes = _.times(codeCount, i => {
     return {
-      code: _.cloneDeep(baseCodes[i % baseCodeCount]),
+      code: _.cloneDeep(baseCodes[(i + codeOffset) % baseCodeCount]),
       fitness: 0
     };
   });
   setTimeout(goToNextGen, 1);
 }
 
-function endGenerating() {
-  codeIndex = 0;
-  beginGame();
-}
-
-function moveCodeIndex(offset: number) {
+function goToNextGeneration() {
   enableButtons(false);
-  currentGame.end();
-  codeIndex += offset;
-  if (codeIndex < 0) {
-    codeIndex += codeCount;
-  } else if (codeIndex >= codeCount) {
-    codeIndex -= codeCount;
+  endGames();
+  let likedCodes = [];
+  _.forEach(games, g => {
+    if (g.screen.likedCheckBox.checked) {
+      likedCodes.push(g.originalCode);
+    }
+  });
+  if (likedCodes.length <= 0) {
+    beginGenerating();
+    return;
   }
-  beginGame();
+  const codeOffset = random.getInt(baseCodeCount);
+  codes = _.times(codeCount, i => {
+    let code;
+    if (i <= codeCount * 0.8) {
+      code = _.cloneDeep(likedCodes[i % likedCodes.length]);
+    } else {
+      code = _.cloneDeep(baseCodes[(i + codeOffset) % baseCodeCount]);
+    }
+    return {
+      code,
+      fitness: 0
+    };
+  });
+  setTimeout(goToNextGen, 1);
 }
 
-function beginGame() {
-  //console.log(JSON.stringify(_.cloneDeep(codes[codeIndex].code), null, 2));
-  const fitness = Math.floor(codes[codeIndex].fitness);
-  showInfo(`id: ${codeSeed}#${codeIndex} fitness: ${fitness}`);
-  currentGame = new Game(new Screen(), isKeyDown);
-  currentGame.begin(codes[codeIndex].code);
+function endGames() {
+  isGamesBegun = false;
+  _.forEach(games, g => {
+    g.end();
+  });
+}
+
+function endGenerating() {
+  games = _.map(codes, c => beginGame(c));
+  isGamesBegun = true;
+  update();
+}
+
+function update() {
+  if (isGamesBegun) {
+    requestAnimationFrame(update);
+  }
+  _.forEach(games, g => {
+    g.update();
+  });
   enableButtons();
+}
+
+function beginGame(code: any) {
+  const fitness = Math.floor(code.fitness);
+  const game = new Game(new Screen(), isKeyDown);
+  game.begin(code.code);
+  return game;
 }
 
 function goToNextGen() {
@@ -154,31 +176,25 @@ function selectCodes() {
 
 function endSelectingCodes() {
   genIndex++;
-  if (genIndex >= genCount) {
-    codes = _(codesWithFitness).sortBy('fitness').reverse().value();
-    endGenerating();
-  } else {
-    const aliveCodeCount = Math.floor(codeCount * aliveRatio);
-    let ci = 0;
-    _.times(codeCount - aliveCodeCount, () => {
-      let nci = ci + 1;
-      if (nci >= codesWithFitness.length) {
-        nci = 0;
-      }
-      const si = (codesWithFitness[ci].fitness > codesWithFitness[nci].fitness) ? nci : ci;
-      codesWithFitness.splice(si, 1);
-      ci++;
-      if (ci >= codesWithFitness.length) {
-        ci = 0;
-      }
-    });
-    codes = _.times(codeCount, i => _.cloneDeep(codesWithFitness[i % aliveCodeCount]));
-    setTimeout(goToNextGen, 1);
-  }
+  let ci = 0;
+  _.times(codeCount - aliveCount, () => {
+    let nci = ci + 1;
+    if (nci >= codesWithFitness.length) {
+      nci = 0;
+    }
+    const si = (codesWithFitness[ci].fitness > codesWithFitness[nci].fitness) ? nci : ci;
+    codesWithFitness.splice(si, 1);
+    ci++;
+    if (ci >= codesWithFitness.length) {
+      ci = 0;
+    }
+  });
+  codes = codesWithFitness;
+  endGenerating();
 }
 
 function addFitnessToCode() {
-  showInfo(`generating... ${genIndex + 1} / ${genCount} : ${fitnessIndex} / ${codeCount}`);
+  showInfo(`generating... ${fitnessIndex} / ${codeCount}`);
   const code = codes[fitnessIndex].code;
   const fitness = calcFitness(code);
   codesWithFitness.push({ code, fitness });
@@ -208,7 +224,7 @@ function calcFitness(code: any[]) {
 function calcDiff(code: any[]) {
   const gameCount = 8;
   const games = _.times(gameCount, i => {
-    const game = new Game(new Screen(null), null, 0, i);
+    const game = new Game(new Screen(false), null, 0, i);
     game.begin(code);
     return game;
   });
@@ -306,7 +322,7 @@ function getCodePart(code: any[], targetDepth = 1, depth = 0) {
 }
 
 function enableButtons(isEnabled = true) {
-  const buttonIds = ['prev', 'next', 'restart', 'regenerate'];
+  const buttonIds = ['next'];
   _.forEach(buttonIds, id => {
     (<HTMLButtonElement>document.getElementById(id)).disabled = !isEnabled;
   });
