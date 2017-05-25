@@ -7,3 +7,4 @@ bomb.gc
 from_four.gc
 road.gc
 wall_kick.gc
+jump_block.gc

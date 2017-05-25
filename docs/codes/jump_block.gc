@@ -1,0 +1,51 @@
+(game jump_block
+  (actor stage
+    (if initial (spawn player))
+    (if (interval frequently) (
+      (if (random frequently) (spawn enemy))
+      (if (random frequently) (spawn bullet))
+    ))
+  )
+  (actor player
+    (if initial (place bottom_left))
+    (if (exists shot) (
+      (if (key up) (accelerate up very_fast))
+    ))
+    (if (not_exists shot) (
+      (if (key up) (accelerate up normal))
+      (if (key down) (accelerate down normal))
+      (accelerate down very_fast)
+      (if (touch out_of_screen_bottom) (
+        (accelerate stop)
+        (place bottom_left)
+        (spawn shot)
+      ))
+    ))
+    (if (touch enemy) miss)
+    (if (touch bullet) miss)
+  )
+  (actor shot
+    (if initial (move up))
+    (if (touch player) remove)    
+  )
+  (actor enemy
+    (if initial (place bottom_right))
+    (move left)
+    (if (touch out_of_screen) (
+      score
+      remove
+    ))
+  )
+  (actor bullet
+    (if initial (
+      (place bottom_right)
+      (if (random half) (move up))
+      (if (random half) (move left))
+    ))
+    (move left)
+    (if (touch out_of_screen) (
+      score
+      remove
+    ))
+  )
+)

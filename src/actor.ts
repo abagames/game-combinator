@@ -16,7 +16,8 @@ export default class Actor {
   freqNamePatterns = {
     'rarely': 0.05,
     'often': 0.1,
-    'frequently': 0.2
+    'frequently': 0.2,
+    'half': 0.5
   };
   defaultFreqName = 'often';
   posNamePatterns = {
@@ -138,9 +139,14 @@ export default class Actor {
         case 'initial':
           this.resultValue = this.ticks === 0;
           break;
+        case 'exists':
         case 'not_exists':
-          const neActorName = this.parse(currentCode.shift());
-          this.resultValue = this.game.getActors(neActorName).length <= 0;
+          const actorName = this.parse(currentCode.shift());
+          if (c === 'exists') {
+            this.resultValue = this.game.getActors(actorName).length > 0;
+          } else {
+            this.resultValue = this.game.getActors(actorName).length <= 0;
+          }
           break;
         case 'random':
         case 'interval':
@@ -178,8 +184,8 @@ export default class Actor {
           currentCode = [];
           break;
         case 'spawn':
-          const actorName = this.parse(currentCode.shift());
-          const actor = this.game.addActor(actorName);
+          const spawningActorName = this.parse(currentCode.shift());
+          const actor = this.game.addActor(spawningActorName);
           if (actor != null) {
             actor.pos.set(this.pos);
           }

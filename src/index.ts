@@ -83,8 +83,9 @@ function loadFile(name: string, callback: (name: string) => void) {
 function beginBaseGame(name: string) {
   const code = baseCodes[baseCodeNames.indexOf(name)];
   console.log(calcFitness(code));
-  const game = new Game(new Screen(), isKeyDown);
-  game.begin(code);
+  games = [beginGame({ code, fitness: 0 })];
+  isGamesBegun = true;
+  update();
 }
 
 function beginGenerating(randomSeed: number = null) {
