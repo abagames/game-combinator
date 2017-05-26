@@ -2,16 +2,43 @@
 <html lang="en">
 
 <head>
-  <meta name="viewport" content="width=device-width, height=device-height,
-  user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>game-combinators</title>
-  <link rel="stylesheet" href="index.css" type="text/css" />
+  <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css">
+  <style>
+     :root {
+      --mdc-theme-primary: #009688;
+      --mdc-theme-accent: #A7FFEB;
+      --mdc-theme-background: #004D40;
+      font-family: 'Roboto Mono', monospace;
+    }
+  </style>
   <script src="bundle.js"></script>
 </head>
 
 <body>
-  <span id="game_info"></span>
-  <button id="next" disabled>next</button>
+  <header class="mdc-toolbar">
+    <div class="mdc-toolbar__row">
+      <section class="mdc-toolbar__section mdc-toolbar__section--align-start">
+        <span class="mdc-toolbar__title">game-combinators</span>
+      </section>
+    </div>
+  </header>
+  <div class="mdc-card">
+    <section class="mdc-card__primary">
+      <button class="mdc-button" id="next" disabled>generate</button>
+      <span id="game_info"></span>
+    </section>
+  </div>
+  <div class="mdc-card">
+    <section class="mdc-card__primary">
+      <div class="mdc-grid-list">
+        <ul class="mdc-grid-list__tiles" id="tiles">
+        </ul>
+      </div>
+    </section>
+  </div>
 </body>
 
 </html>
