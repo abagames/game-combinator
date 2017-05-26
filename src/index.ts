@@ -29,6 +29,7 @@ let isGamesBegun = false;
 function init() {
   initEventHandlers();
   loadGameList();
+  update();
 }
 
 function initEventHandlers() {
@@ -83,9 +84,8 @@ function loadFile(name: string, callback: (name: string) => void) {
 function beginBaseGame(name: string) {
   const code = baseCodes[baseCodeNames.indexOf(name)];
   console.log(calcFitness(code));
-  games = [beginGame({ code, fitness: 0 })];
-  isGamesBegun = true;
-  update();
+  games = [beginGame({ code, fitness: 0 }, 'loaded')];
+  beginGames();
 }
 
 function beginGenerating(randomSeed: number = null) {
@@ -100,7 +100,7 @@ function beginGenerating(randomSeed: number = null) {
       fitness: 0
     };
   });
-  setTimeout(goToNextGen, 1);
+  setTimeout(crossoverCodes, 1);
 }
 
 function goToNextGeneration() {
@@ -129,7 +129,17 @@ function goToNextGeneration() {
       fitness: 0
     };
   });
-  setTimeout(goToNextGen, 1);
+  setTimeout(crossoverCodes, 1);
+}
+
+function beginGeneratedGames() {
+  games = _.map(codes, c => beginGame(c));
+  enableButtons();
+  beginGames();
+}
+
+function beginGames() {
+  isGamesBegun = true;
 }
 
 function endGames() {
@@ -139,30 +149,38 @@ function endGames() {
   });
 }
 
-function endGenerating() {
-  games = _.map(codes, c => beginGame(c));
-  isGamesBegun = true;
-  update();
-}
-
 function update() {
-  if (isGamesBegun) {
-    requestAnimationFrame(update);
+  requestAnimationFrame(update);
+  if (!isGamesBegun) {
+    return;
   }
   _.forEach(games, g => {
     g.update();
   });
-  enableButtons();
 }
 
-function beginGame(code: any) {
+function beginGame(code: any, mode = 'generated') {
   const fitness = Math.floor(code.fitness);
-  const game = new Game(new Screen(), isKeyDown);
+  const screen = new Screen(true, mode);
+  const game = new Game(screen, isKeyDown);
+  if (mode === 'generated') {
+    screen.setOnButtonClicked(() => {
+      endGames();
+      enableButtons(false);
+      games = [beginGame({ code: game.originalCode, fitness: 0 }, 'selected')];
+      beginGames();
+    });
+  } else if (mode === 'selected') {
+    screen.setOnButtonClicked(() => {
+      endGames();
+      beginGeneratedGames();
+    });
+  }
   game.begin(code.code);
   return game;
 }
 
-function goToNextGen() {
+function crossoverCodes() {
   _.times(codeCount * crossoverCount, i => {
     crossover(i % codeCount);
   });
@@ -191,7 +209,7 @@ function endSelectingCodes() {
     }
   });
   codes = codesWithFitness;
-  endGenerating();
+  beginGeneratedGames();
 }
 
 function addFitnessToCode() {
