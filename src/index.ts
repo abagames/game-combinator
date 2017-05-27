@@ -20,10 +20,10 @@ let codes: { code: any[], fitness: number }[];
 let codeIndex: number;
 let codesWithFitness: { code: any[], fitness: number }[];
 let fitnessIndex: number;
-let genIndex: number;
 let random: Random;
 let isKeyDown = _.times(256, () => false);
-let games: Game[];
+let games: Game[] = [];
+let isLiked: boolean[] = [];
 let isGamesBegun = false;
 
 function init() {
@@ -39,7 +39,10 @@ function initEventHandlers() {
   document.onkeyup = e => {
     isKeyDown[e.keyCode] = false;
   };
-  document.getElementById('next').onclick = e => {
+  document.getElementById('generate').onclick = () => {
+    beginGenerating();
+  };
+  document.getElementById('generate_from_liked').onclick = () => {
     goToNextGeneration();
   };
 }
@@ -90,7 +93,7 @@ function beginBaseGame(name: string) {
 
 function beginGenerating(randomSeed: number = null) {
   enableButtons(false);
-  genIndex = 0;
+  endGames();
   codeSeed = randomSeed != null ? randomSeed : new Random().getToMaxInt();
   random = new Random().setSeed(codeSeed);
   const codeOffset = random.getInt(baseCodeCount);
@@ -133,13 +136,16 @@ function goToNextGeneration() {
 }
 
 function beginGeneratedGames() {
-  showInfo('Use [WASD] keys to control');
   games = _.map(codes, c => beginGame(c));
+  _.forEach(isLiked, (il, i) => {
+    games[i].screen.likedCheckBox.checked = il;
+  });
   enableButtons();
   beginGames();
 }
 
 function beginGames() {
+  showInfo('Use [WASD] keys to control');
   isGamesBegun = true;
 }
 
@@ -166,6 +172,9 @@ function beginGame(code: any, mode = 'generated') {
   const game = new Game(screen, isKeyDown);
   if (mode === 'generated') {
     screen.setOnButtonClicked(() => {
+      _.forEach(games, (g, i) => {
+        isLiked[i] = games[i].screen.likedCheckBox.checked;
+      });
       endGames();
       enableButtons(false);
       games = [beginGame({ code: game.originalCode, fitness: 0 }, 'selected')];
@@ -195,7 +204,6 @@ function selectCodes() {
 }
 
 function endSelectingCodes() {
-  genIndex++;
   let ci = 0;
   _.times(codeCount - aliveCount, () => {
     let nci = ci + 1;
@@ -210,6 +218,7 @@ function endSelectingCodes() {
     }
   });
   codes = codesWithFitness;
+  isLiked = _.times(aliveCount, () => true);
   beginGeneratedGames();
 }
 
@@ -342,7 +351,7 @@ function getCodePart(code: any[], targetDepth = 1, depth = 0) {
 }
 
 function enableButtons(isEnabled = true) {
-  const buttonIds = ['next'];
+  const buttonIds = ['generate', 'generate_from_liked'];
   _.forEach(buttonIds, id => {
     (<HTMLButtonElement>document.getElementById(id)).disabled = !isEnabled;
   });
