@@ -1,4 +1,5 @@
 import * as parseSE from 's-expression';
+import * as LZString from 'lz-string';
 import * as _ from 'lodash';
 import Game from './game';
 import Screen from './screen';
@@ -10,6 +11,7 @@ const codeCount = 100;
 const aliveCount = 10;
 const crossoverCount = 5;
 const fitnessCalcTicks = 100;
+const version = '1';
 let baseCodeCount: number;
 let baseCodeNames: string[];
 let baseCodes: any[];
@@ -69,8 +71,10 @@ function loadCode(name: string, index: number) {
     loadedBaseCodeCount++;
     if (loadedBaseCodeCount >= baseCodeCount) {
       calcBaseCodesDiffParams();
-      beginGenerating();
-      //beginBaseGame('fire.gc');
+      if (!loadFromUrl()) {
+        beginGenerating();
+        //beginBaseGame('fire.gc');
+      }
     }
   });
 }
@@ -136,6 +140,7 @@ function goToNextGeneration() {
 }
 
 function beginGeneratedGames() {
+  resetUrl();
   games = _.map(codes, c => beginGame(c));
   _.forEach(isLiked, (il, i) => {
     games[i].screen.likedCheckBox.checked = il;
@@ -176,7 +181,8 @@ function beginGame(code: any, mode = 'generated') {
         isLiked[i] = games[i].screen.likedCheckBox.checked;
       });
       endGames();
-      enableButtons(false);
+      enableButtons(false, ['generate_from_liked']);
+      saveAsUrl(game.originalCode);
       games = [beginGame({ code: game.originalCode, fitness: 0 }, 'selected')];
       beginGames();
     });
@@ -350,8 +356,8 @@ function getCodePart(code: any[], targetDepth = 1, depth = 0) {
   return getCodePart(part, targetDepth, depth + 1);
 }
 
-function enableButtons(isEnabled = true) {
-  const buttonIds = ['generate', 'generate_from_liked'];
+function enableButtons(isEnabled = true,
+  buttonIds = ['generate', 'generate_from_liked']) {
   _.forEach(buttonIds, id => {
     (<HTMLButtonElement>document.getElementById(id)).disabled = !isEnabled;
   });
@@ -359,4 +365,58 @@ function enableButtons(isEnabled = true) {
 
 function showInfo(text: string) {
   document.getElementById('game_info').textContent = text;
+}
+
+function saveAsUrl(code: any[]) {
+  const baseUrl = window.location.href.split('?')[0];
+  const codeStr = LZString.compressToEncodedURIComponent(JSON.stringify(code));
+  const url = `${baseUrl}?v=${version}&c=${codeStr}`;
+  return changeUrl(url);
+}
+
+function resetUrl() {
+  const baseUrl = window.location.href.split('?')[0];
+  return changeUrl(baseUrl);
+}
+
+function changeUrl(url: string) {
+  try {
+    window.history.replaceState({}, '', url);
+    return true;
+  } catch (e) {
+    console.log(e);
+    return false;
+  }
+}
+
+function loadFromUrl() {
+  const query = window.location.search.substring(1);
+  if (query == null) {
+    return false;
+  }
+  let params = query.split('&');
+  let versionStr: string;
+  let codeStr: string;
+  for (let i = 0; i < params.length; i++) {
+    const param = params[i];
+    const pair = param.split('=');
+    if (pair[0] === 'v') {
+      versionStr = pair[1];
+    } else if (pair[0] === 'c') {
+      codeStr = pair[1];
+    }
+  }
+  if (versionStr !== version || codeStr == null) {
+    return false;
+  }
+  try {
+    const code = JSON.parse(LZString.decompressFromEncodedURIComponent(codeStr));
+    games = [beginGame({ code, fitness: 0 }, 'loaded')];
+    enableButtons(true, ['generate']);
+    beginGames();
+    return true;
+  } catch (e) {
+    console.log(e);
+    return false;
+  }
 }
