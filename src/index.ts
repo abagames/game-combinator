@@ -133,6 +133,7 @@ function goToNextGeneration() {
 }
 
 function beginGeneratedGames() {
+  showInfo('Use [WASD] keys to control');
   games = _.map(codes, c => beginGame(c));
   enableButtons();
   beginGames();
@@ -213,7 +214,7 @@ function endSelectingCodes() {
 }
 
 function addFitnessToCode() {
-  showInfo(`generating... ${fitnessIndex} / ${codeCount}`);
+  showInfo(`Generating... ${fitnessIndex} / ${codeCount}`);
   const code = codes[fitnessIndex].code;
   const fitness = calcFitness(code);
   codesWithFitness.push({ code, fitness });
