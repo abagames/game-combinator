@@ -1,7 +1,7 @@
 {
   "name": "game-combinator",
   "version": "1.0.0",
-  "description": "Combine games into one",
+  "description": "Combine games and generate a new one",
   "author": "ABA",
   "license": "MIT",
   "scripts": {
