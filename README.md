@@ -4,7 +4,7 @@ Combine games and generate a new one. (Experimental, WIP)
 
 ### How to work
 
-Combine the games randomly
+Combine the games randomly...
 
 ![helmet](https://abagames.github.io/game-combinator/img/helmet.gif) ![flap](https://abagames.github.io/game-combinator/img/flap.gif)
 
@@ -16,9 +16,9 @@ Combine the games randomly
   )                                                )
   (actor player                                    (actor player
     (if initial (place bottom_left))                 (if initial (place left_center))
-    (if (key left) (move left))                      (if (key up) (accelerate up fast))
+    (if (key left) (move left))      CROSSOVER       (if (key up) (accelerate up fast))
     (accelerate down normal)    <------------------
-                                -------------------> (if (key right) (move right))
+                                 ------------------> (if (key right) (move right))
     (if (touch out_of_screen_right) (                (if (touch out_of_screen) miss)
       score                                          (if (touch enemy) miss)
       (place bottom_left)                          )
@@ -26,9 +26,9 @@ Combine the games randomly
     (if (touch out_of_screen) (move step_back))  
   )
   (actor enemy                                     (actor enemy
-    (if initial (place top))                         (if initial (place right))
+    (if initial (place top))         CROSSOVER       (if initial (place right))
                                  ------------------> (accelerate down normal)
-    (move left)                  <------------------
+    (move left)                 <------------------
     (if (touch player) miss)                         (if (touch out_of_screen) (
     (if (touch out_of_screen) remove)                  score
   )                                                    remove
@@ -41,7 +41,7 @@ and pray that it becomes a game.
 
 ![generated](https://abagames.github.io/game-combinator/img/generated.gif)
 
-### Examples of generate games
+### Examples of generated games
 
 [Avoid falling](https://abagames.github.io/game-combinator/index.html?v=1&c=NoIg5ghgtgpiA0IBmAnA9lA+ktBXFCoEAxgC5oGIDOpEYc8oAlkoSChAHYAmGCIaJKRicQAXTGJyuYgAs2Lfk05NSTCABs2KJmFml+VAA4QA7qMRGNEAJ4wCExiEVOOPPolQwAjrhGkNG3EnYzMLEAAjXA0NGAMJSSIyCn4rW3sFVkRlVXUtJzTiBhAizmEHROcs0ABrGCDEWKFg0Cg0ADdipvjKl1r6-h09eKc2zsHdfXFe6pA6hpBcIxaQMeKl6ac+uYHEXnMVtf590UdmWek5fjxSTEFMKmIUGBFDjuKaGCNMCIgazfObEu8kQURicWCqyYVCoAJAJHIlEi0ViBlG72OaAOMyUKjUmjYVBgsTIhFAhWK5GWlRIRViHGEmIOiE6KBs2AgNAB5OsRX4ETQpHIUBWtOJ9ggjMQGxZ9nZSE5PUYPJIXRgzRpxDpEql7EmaJArPliu5IApE2Goq14oZauasrZHK5CRxTmBqWsdgciCg0NhrtA7sQNzuSAeTxepxCxAoxWeRxdQA) /
 [rainy](https://abagames.github.io/game-combinator/index.html?v=1&c=NoIg5ghgtgpiA0IBmAnA9lA+ktBXFCoEAxgC5oGIDOpEYc8oAlkoSChAHYAmGCIaJKRicQAXTGJyuYgAs2Lfk05NSTCABs2KJmFml+VAA4QA7qMRGNEAJ4wCExiEVOOPPolQwAjrhGkNG3EnYzMLEAAjXA0NGAMJSSIyCn4rW3sFVkRlVXUtJzTiBhAizmEHROcs0ABrGCDEWKFg0Cg0ADdipvjKl1r6-h09eKc2zsHdfXFe6pA6hpBcIxaQMeKl6ac+http://localhost:8080/?v=1&c=NoIg5ghgtgpiA0IBOB7CATBoIGMAuKSCIAznhGHPKAJYBmxNAdjXjRADZakAOEA7k2I8OEAJ4wiAXSnUQ9RizacsoEn0HDRE6YnUChiGExhQxIGbOz5CW8ZO4LEzVuy5yRuKiABGKPARQAPo4xngOMnJOoADWMOaIHDB0eBZyuKFJSBDhxEkpxABukmJBdBBkFlbyDHJxCcg0YAAWqdUZMFk53khNrUUlZRVt7TiZkt3EJBwo-EHos0LV0SAEAK44zcQoa3hBKHRBJDhIMMZpwKBQKMVT4TxBPrgxFyAdXbmIfmtMoUHNhBoAC8UExyFxLHocIQqLRaqB1pspgC2ogoDQSCRXitEVsvmsOElUSB0ZiqukbEQjCYzI5avIlG5uJ5QsQCA9QmCIst4cgIEwFlBiHRTgBHNZhDjmUbjbKfED5VKIcqVSJwxSuFRyfSaPQaQwgTw6cnquTZAUoIXKsUSsFS17vCby3otJUgFUjKK83HbXb7Q7HU7nWTIUw3OA87g+xA7PYHI4nM5LahXcN3GAPJ44F4yzpO7zfX4wf6AkFglSQtT65H+V46g0+AlEk1vSk1pWmhma9ygFnedktpxd5Q91uyyaJZJu4pIUoelvXW6IBaaSNm-mC7YpYMU8fy6azeaLQfenZImN++OBpNpUOLiOjAhU3xNmAdmrEU737H0lwj7iOnKPR9NOgzzmqJJpsux5rqA5qbjG27JtYe7eAecwrkssGrGeeIgLG-oJkGyZ3mmlhAA) /
