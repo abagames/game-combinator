@@ -53,4 +53,5 @@ and pray that it becomes a game.
 
 [s-expression](https://github.com/fwg/s-expression) /
 [lz-string](http://pieroxy.net/blog/pages/lz-string/index.html) /
-[lodash](https://lodash.com/)
+[lodash](https://lodash.com/) /
+[Material Components](https://material.io/components/)
