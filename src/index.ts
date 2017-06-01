@@ -29,6 +29,7 @@ let isLiked: boolean[] = [];
 let isGamesBegun = false;
 
 function init() {
+  showInfo('Loading...');
   initEventHandlers();
   loadGameList();
   update();
@@ -73,7 +74,6 @@ function loadCode(name: string, index: number) {
       calcBaseCodesDiffParams();
       if (!loadFromUrl()) {
         beginGenerating();
-        //beginBaseGame('fire.gc');
       }
     }
   });
@@ -90,8 +90,13 @@ function loadFile(name: string, callback: (name: string) => void) {
 
 function beginBaseGame(name: string) {
   const code = baseCodes[baseCodeNames.indexOf(name)];
-  console.log(calcFitness(code));
+  if (code == null) {
+    const errMsg = `Game "${name}" not found`;
+    showInfo(errMsg);
+    return;
+  }
   games = [beginGame({ code, fitness: 0 }, 'loaded')];
+  enableButtons(true, ['generate']);
   beginGames();
 }
 
@@ -397,6 +402,7 @@ function loadFromUrl() {
   let params = query.split('&');
   let versionStr: string;
   let codeStr: string;
+  let gameNameStr: string;
   for (let i = 0; i < params.length; i++) {
     const param = params[i];
     const pair = param.split('=');
@@ -404,19 +410,26 @@ function loadFromUrl() {
       versionStr = pair[1];
     } else if (pair[0] === 'c') {
       codeStr = pair[1];
+    } else if (pair[0] === 'g') {
+      gameNameStr = pair[1];
     }
   }
-  if (versionStr !== version || codeStr == null) {
+  if (versionStr == null && codeStr == null && gameNameStr == null) {
     return false;
   }
-  try {
-    const code = JSON.parse(LZString.decompressFromEncodedURIComponent(codeStr));
-    games = [beginGame({ code, fitness: 0 }, 'loaded')];
-    enableButtons(true, ['generate']);
-    beginGames();
-    return true;
-  } catch (e) {
-    console.log(e);
-    return false;
+  if (versionStr !== version) {
+    showInfo('Invalid version number');
+  } else if (codeStr != null) {
+    try {
+      const code = JSON.parse(LZString.decompressFromEncodedURIComponent(codeStr));
+      games = [beginGame({ code, fitness: 0 }, 'loaded')];
+      enableButtons(true, ['generate']);
+      beginGames();
+    } catch (e) {
+      showInfo('Load a code from URL failed');
+    }
+  } else if (gameNameStr != null) {
+    beginBaseGame(gameNameStr);
   }
+  return true;
 }

@@ -6,7 +6,7 @@ Combine games and generate a new one. (Experimental, WIP)
 
 Combine the games randomly...
 
-helmet | flap
+[helmet]((https://abagames.github.io/game-combinator/?v=1&g=helmet.gc) | [flap]((https://abagames.github.io/game-combinator/?v=1&flap.gc)
 --- | ---
 ![helmet](https://abagames.github.io/game-combinator/img/helmet.gif) | ![flap](https://abagames.github.io/game-combinator/img/flap.gif)
 

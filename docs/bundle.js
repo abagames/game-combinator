@@ -17853,6 +17853,7 @@ var games = [];
 var isLiked = [];
 var isGamesBegun = false;
 function init() {
+    showInfo('Loading...');
     initEventHandlers();
     loadGameList();
     update();
@@ -17894,7 +17895,6 @@ function loadCode(name, index) {
             calcBaseCodesDiffParams();
             if (!loadFromUrl()) {
                 beginGenerating();
-                //beginBaseGame('fire.gc');
             }
         }
     });
@@ -17909,8 +17909,13 @@ function loadFile(name, callback) {
 }
 function beginBaseGame(name) {
     var code = baseCodes[baseCodeNames.indexOf(name)];
-    console.log(calcFitness(code));
+    if (code == null) {
+        var errMsg = "Game \"" + name + "\" not found";
+        showInfo(errMsg);
+        return;
+    }
     games = [beginGame({ code: code, fitness: 0 }, 'loaded')];
+    enableButtons(true, ['generate']);
     beginGames();
 }
 function beginGenerating(randomSeed) {
@@ -18210,6 +18215,7 @@ function loadFromUrl() {
     var params = query.split('&');
     var versionStr;
     var codeStr;
+    var gameNameStr;
     for (var i = 0; i < params.length; i++) {
         var param = params[i];
         var pair = param.split('=');
@@ -18219,21 +18225,31 @@ function loadFromUrl() {
         else if (pair[0] === 'c') {
             codeStr = pair[1];
         }
+        else if (pair[0] === 'g') {
+            gameNameStr = pair[1];
+        }
     }
-    if (versionStr !== version || codeStr == null) {
+    if (versionStr == null && codeStr == null && gameNameStr == null) {
         return false;
     }
-    try {
-        var code = JSON.parse(LZString.decompressFromEncodedURIComponent(codeStr));
-        games = [beginGame({ code: code, fitness: 0 }, 'loaded')];
-        enableButtons(true, ['generate']);
-        beginGames();
-        return true;
+    if (versionStr !== version) {
+        showInfo('Invalid version number');
     }
-    catch (e) {
-        console.log(e);
-        return false;
+    else if (codeStr != null) {
+        try {
+            var code = JSON.parse(LZString.decompressFromEncodedURIComponent(codeStr));
+            games = [beginGame({ code: code, fitness: 0 }, 'loaded')];
+            enableButtons(true, ['generate']);
+            beginGames();
+        }
+        catch (e) {
+            showInfo('Load a code from URL failed');
+        }
     }
+    else if (gameNameStr != null) {
+        beginBaseGame(gameNameStr);
+    }
+    return true;
 }
 
 
