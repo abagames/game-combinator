@@ -36,6 +36,9 @@ export default class Actor {
     'right': { x: 1, y: null }
   };
   defaultPosName = 'center';
+  edgePosNames = [
+    'top', 'bottom', 'left', 'right'
+  ];
   keyNamePatterns = {
     'left': [65, 37],
     'right': [68, 39],
@@ -191,21 +194,7 @@ export default class Actor {
           }
           break;
         case 'place':
-          const posName = this.parse(currentCode.shift());
-          let pp = this.posNamePatterns[posName];
-          if (pp == null) {
-            pp = this.posNamePatterns[this.defaultPosName];
-          }
-          if (pp.x == null) {
-            pp.x = this.game.random.get();
-          }
-          if (pp.y == null) {
-            pp.y = this.game.random.get();
-          }
-          this.pos.set(
-            Math.floor(pp.x * (this.screen.width - 0.01)),
-            Math.floor(pp.y * (this.screen.height - 0.01)));
-          this.prevPos.set(this.pos);
+          this.place(currentCode);
           break;
         case 'move':
           this.move(currentCode);
@@ -269,6 +258,27 @@ export default class Actor {
     }
   }
 
+  place(currentCode: any[]) {
+    let posName = this.parse(currentCode.shift());
+    if (posName === 'edge') {
+      posName = this.edgePosNames[this.game.random.getInt(4)];
+    }
+    let pp = this.posNamePatterns[posName];
+    if (pp == null) {
+      pp = this.posNamePatterns[this.defaultPosName];
+    }
+    if (pp.x == null) {
+      pp.x = this.game.random.get();
+    }
+    if (pp.y == null) {
+      pp.y = this.game.random.get();
+    }
+    this.pos.set(
+      Math.floor(pp.x * (this.screen.width - 0.01)),
+      Math.floor(pp.y * (this.screen.height - 0.01)));
+    this.prevPos.set(this.pos);
+  }
+
   move(currentCode: any[]) {
     const moveName = this.parse(currentCode.shift());
     if (moveName === 'step_back') {
@@ -308,6 +318,9 @@ export default class Actor {
       return;
     }
     let ap = this.angleNamePatterns[angleName];
+    if (angleName === 'to_player') {
+      ap = this.getAngleTo('player');
+    }
     if (ap == null) {
       ap = this.angleNamePatterns[this.defaultAngleName];
     }
@@ -318,6 +331,31 @@ export default class Actor {
     }
     this.vel.x += ap.x * sp;
     this.vel.y += ap.y * sp;
+  }
+
+  getAngleTo(name: string) {
+    const actors = this.game.getActors(name);
+    let dist = 9999999;
+    let target: Actor;
+    _.forEach(actors, a => {
+      if (a === this) {
+        return;
+      }
+      const ox = this.pos.x - a.pos.x;
+      const oy = this.pos.y - a.pos.y;
+      const d = Math.sqrt(ox * ox + oy * oy);
+      if (d < dist) {
+        target = a;
+        dist = d;
+      }
+    });
+    if (target == null) {
+      return null;
+    }
+    return new Vector(
+      (target.pos.x - this.pos.x) / dist,
+      (target.pos.y - this.pos.y) / dist,
+    );
   }
 }
 

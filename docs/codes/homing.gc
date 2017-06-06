@@ -1,0 +1,25 @@
+(game homing
+  (actor stage
+    (if initial (spawn player))
+    (if (random often) (spawn enemy))
+  )
+  (actor player
+    (if initial (place center))
+    (if (key left) (move left))
+    (if (key right) (move right))
+    (if (key up) (move up))
+    (if (key down) (move down))
+    (if (touch out_of_screen) (move step_bak))
+    (if (touch enemy) miss)
+  )
+  (actor enemy
+    (if initial (place edge))
+    (accelerate to_player)
+    (if (touch out_of_screen) remove)
+    (if (touch enemy) (
+      score
+      remove
+      remove_touched
+    ))
+  )
+)
