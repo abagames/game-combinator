@@ -20,6 +20,12 @@ export default class Actor {
     'half': 0.5
   };
   defaultFreqName = 'often';
+  durationNamePatterns = {
+    'tick': 1,
+    'soon': 5,
+    'later': 10
+  };
+  defaultDurationName = 'soon';
   posNamePatterns = {
     'top_left': { x: 0, y: 0 },
     'bottom_left': { x: 0, y: 1 },
@@ -163,6 +169,19 @@ export default class Actor {
           } else {
             const it = Math.floor(1 / freq);
             this.resultValue = this.ticks % it === 0;
+          }
+          break;
+        case 'before':
+        case 'after':
+          const durationName = this.parse(currentCode.shift());
+          let duration = this.durationNamePatterns[durationName];
+          if (duration == null) {
+            duration = this.durationNamePatterns[this.defaultDurationName];
+          }
+          if (c === 'before') {
+            this.resultValue = this.ticks < duration;
+          } else {
+            this.resultValue = this.ticks >= duration;
           }
           break;
         case 'key':
@@ -337,12 +356,14 @@ export default class Actor {
     const actors = this.game.getActors(name);
     let dist = 9999999;
     let target: Actor;
+    let ox: number;
+    let oy: number;
     _.forEach(actors, a => {
       if (a === this) {
         return;
       }
-      const ox = this.pos.x - a.pos.x;
-      const oy = this.pos.y - a.pos.y;
+      ox = a.pos.x - this.pos.x;
+      oy = a.pos.y - this.pos.y;
       const d = Math.sqrt(ox * ox + oy * oy);
       if (d < dist) {
         target = a;
@@ -352,10 +373,8 @@ export default class Actor {
     if (target == null) {
       return null;
     }
-    return new Vector(
-      (target.pos.x - this.pos.x) / dist,
-      (target.pos.y - this.pos.y) / dist,
-    );
+    const angle = Math.atan2(oy, ox);
+    return new Vector(Math.cos(angle), Math.sin(angle));
   }
 }
 

@@ -9,3 +9,4 @@ road.gc
 wall_kick.gc
 jump_block.gc
 homing.gc
+reflect_blocks.gc

@@ -1,0 +1,52 @@
+(game reflect_blocks
+  (actor stage
+    (if initial (spawn player))
+    (if (random rarely) (spawn enemy))
+    (if (interval rarely) (spawn bullet))
+  )
+  (actor player
+    (if initial (place center))
+    (spawn shot)
+    (if (key left) (move left))
+    (if (key right) (move right))
+    (if (key up) (move up))
+    (if (key down) (move down))
+    (if (touch out_of_screen) (move step_back))    
+  )
+  (actor shot
+    (if (after soon) remove)
+  )
+  (actor enemy
+    (if initial 
+      (place top)
+      (accelerate down very_slow)
+    )
+    (if (touch out_of_screen) miss)
+  )
+  (actor bullet
+    (if initial (
+      (place top)
+      (accelerate down very_fast)
+      (select
+        (accelerate right very_fast)
+        (accelerate left very_fast)
+      )
+    ))
+    (if (touch out_of_screen_right) (accelerate bounce_horizontal))
+    (if (touch out_of_screen_left) (accelerate bounce_horizontal))
+    (if (touch player) (
+      (accelerate bounce_vertical)
+      (move up)
+    ))
+    (if (touch shot) (
+      (accelerate bounce_vertical)
+      (move up)
+    ))
+    (if (touch enemy) (
+      (accelerate bounce_vertical)
+      remove_touched
+      score
+    ))
+    (if (touch out_of_screen_bottom) remove)
+  )
+)
