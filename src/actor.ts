@@ -304,17 +304,14 @@ export default class Actor {
       this.pos.set(this.prevPos.x, this.prevPos.y);
       return;
     }
-    let mp: Vector = this.angleNamePatterns[moveName];
-    if (mp == null) {
-      mp = this.angleNamePatterns[this.defaultAngleName];
-    }
+    const av = this.getAngleVector(moveName);
     const speedName = this.parse(currentCode.shift());
     let speed = this.moveNamePatterns[speedName];
     if (speed == null) {
       speed = this.moveNamePatterns[this.defaultMoveName];
     }
-    this.pos.x += mp.x * speed;
-    this.pos.y += mp.y * speed;
+    this.pos.x += av.x * speed;
+    this.pos.y += av.y * speed;
   }
 
   accelerate(currentCode: any[]) {
@@ -336,20 +333,26 @@ export default class Actor {
       this.vel.y *= 0.9;
       return;
     }
+    const av = this.getAngleVector(angleName);
+    const speedName = this.parse(currentCode.shift());
+    let speed = this.accelerateNamePatterns[speedName];
+    if (speed == null) {
+      speed = this.accelerateNamePatterns[this.defaultAccelerateName];
+    }
+    this.vel.x += av.x * speed;
+    this.vel.y += av.y * speed;
+  }
+
+  getAngleVector(angleName): Vector {
     let ap = this.angleNamePatterns[angleName];
-    if (angleName === 'to_player') {
-      ap = this.getAngleTo('player');
+    if (_.startsWith(angleName, 'to_')) {
+      const target = angleName.substring(3);
+      ap = this.getAngleTo(target);
     }
     if (ap == null) {
       ap = this.angleNamePatterns[this.defaultAngleName];
     }
-    const speedName = this.parse(currentCode.shift());
-    let sp = this.accelerateNamePatterns[speedName];
-    if (sp == null) {
-      sp = this.accelerateNamePatterns[this.defaultAccelerateName];
-    }
-    this.vel.x += ap.x * sp;
-    this.vel.y += ap.y * sp;
+    return ap;
   }
 
   getAngleTo(name: string) {
