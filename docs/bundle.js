@@ -17237,6 +17237,12 @@ var Actor = (function () {
             'half': 0.5
         };
         this.defaultFreqName = 'often';
+        this.durationNamePatterns = {
+            'tick': 1,
+            'soon': 5,
+            'later': 10
+        };
+        this.defaultDurationName = 'soon';
         this.posNamePatterns = {
             'top_left': { x: 0, y: 0 },
             'bottom_left': { x: 0, y: 1 },
@@ -17253,6 +17259,9 @@ var Actor = (function () {
             'right': { x: 1, y: null }
         };
         this.defaultPosName = 'center';
+        this.edgePosNames = [
+            'top', 'bottom', 'left', 'right'
+        ];
         this.keyNamePatterns = {
             'left': [65, 37],
             'right': [68, 39],
@@ -17378,6 +17387,20 @@ var Actor = (function () {
                         this.resultValue = this.ticks % it === 0;
                     }
                     break;
+                case 'before':
+                case 'after':
+                    var durationName = this.parse(currentCode.shift());
+                    var duration = this.durationNamePatterns[durationName];
+                    if (duration == null) {
+                        duration = this.durationNamePatterns[this.defaultDurationName];
+                    }
+                    if (c === 'before') {
+                        this.resultValue = this.ticks < duration;
+                    }
+                    else {
+                        this.resultValue = this.ticks >= duration;
+                    }
+                    break;
                 case 'key':
                     if (this.game.isKeyDown == null) {
                         this.resultValue = false;
@@ -17407,19 +17430,7 @@ var Actor = (function () {
                     }
                     break;
                 case 'place':
-                    var posName = this.parse(currentCode.shift());
-                    var pp = this.posNamePatterns[posName];
-                    if (pp == null) {
-                        pp = this.posNamePatterns[this.defaultPosName];
-                    }
-                    if (pp.x == null) {
-                        pp.x = this.game.random.get();
-                    }
-                    if (pp.y == null) {
-                        pp.y = this.game.random.get();
-                    }
-                    this.pos.set(Math.floor(pp.x * (this.screen.width - 0.01)), Math.floor(pp.y * (this.screen.height - 0.01)));
-                    this.prevPos.set(this.pos);
+                    this.place(currentCode);
                     break;
                 case 'move':
                     this.move(currentCode);
@@ -17482,23 +17493,38 @@ var Actor = (function () {
                 return this.pos.y >= 0 && this.pos.y < sh && this.pos.x >= sw;
         }
     };
+    Actor.prototype.place = function (currentCode) {
+        var posName = this.parse(currentCode.shift());
+        if (posName === 'edge') {
+            posName = this.edgePosNames[this.game.random.getInt(4)];
+        }
+        var pp = this.posNamePatterns[posName];
+        if (pp == null) {
+            pp = this.posNamePatterns[this.defaultPosName];
+        }
+        if (pp.x == null) {
+            pp.x = this.game.random.get();
+        }
+        if (pp.y == null) {
+            pp.y = this.game.random.get();
+        }
+        this.pos.set(Math.floor(pp.x * (this.screen.width - 0.01)), Math.floor(pp.y * (this.screen.height - 0.01)));
+        this.prevPos.set(this.pos);
+    };
     Actor.prototype.move = function (currentCode) {
         var moveName = this.parse(currentCode.shift());
         if (moveName === 'step_back') {
             this.pos.set(this.prevPos.x, this.prevPos.y);
             return;
         }
-        var mp = this.angleNamePatterns[moveName];
-        if (mp == null) {
-            mp = this.angleNamePatterns[this.defaultAngleName];
-        }
+        var av = this.getAngleVector(moveName);
         var speedName = this.parse(currentCode.shift());
         var speed = this.moveNamePatterns[speedName];
         if (speed == null) {
             speed = this.moveNamePatterns[this.defaultMoveName];
         }
-        this.pos.x += mp.x * speed;
-        this.pos.y += mp.y * speed;
+        this.pos.x += av.x * speed;
+        this.pos.y += av.y * speed;
     };
     Actor.prototype.accelerate = function (currentCode) {
         var angleName = this.parse(currentCode.shift());
@@ -17519,17 +17545,50 @@ var Actor = (function () {
             this.vel.y *= 0.9;
             return;
         }
+        var av = this.getAngleVector(angleName);
+        var speedName = this.parse(currentCode.shift());
+        var speed = this.accelerateNamePatterns[speedName];
+        if (speed == null) {
+            speed = this.accelerateNamePatterns[this.defaultAccelerateName];
+        }
+        this.vel.x += av.x * speed;
+        this.vel.y += av.y * speed;
+    };
+    Actor.prototype.getAngleVector = function (angleName) {
         var ap = this.angleNamePatterns[angleName];
+        if (_.startsWith(angleName, 'to_')) {
+            var target = angleName.substring(3);
+            ap = this.getAngleTo(target);
+        }
         if (ap == null) {
             ap = this.angleNamePatterns[this.defaultAngleName];
         }
-        var speedName = this.parse(currentCode.shift());
-        var sp = this.accelerateNamePatterns[speedName];
-        if (sp == null) {
-            sp = this.accelerateNamePatterns[this.defaultAccelerateName];
+        return ap;
+    };
+    Actor.prototype.getAngleTo = function (name) {
+        var _this = this;
+        var actors = this.game.getActors(name);
+        var dist = 9999999;
+        var target;
+        var ox;
+        var oy;
+        _.forEach(actors, function (a) {
+            if (a === _this) {
+                return;
+            }
+            ox = a.pos.x - _this.pos.x;
+            oy = a.pos.y - _this.pos.y;
+            var d = Math.sqrt(ox * ox + oy * oy);
+            if (d < dist) {
+                target = a;
+                dist = d;
+            }
+        });
+        if (target == null) {
+            return null;
         }
-        this.vel.x += ap.x * sp;
-        this.vel.y += ap.y * sp;
+        var angle = Math.atan2(oy, ox);
+        return new Vector(Math.cos(angle), Math.sin(angle));
     };
     return Actor;
 }());
