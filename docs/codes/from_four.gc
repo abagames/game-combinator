@@ -9,7 +9,7 @@
     (if (key right) (move right))
     (if (key up) (move up))
     (if (key down) (move down))
-    (if (touch out_of_screen) (move step_bak))
+    (if (touch out_of_screen) (move step_back))
     (if (touch bullet) miss)
   )
   (actor bullet
