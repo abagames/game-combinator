@@ -376,6 +376,8 @@ export default class Actor {
     if (target == null) {
       return null;
     }
+    ox = target.pos.x - this.pos.x;
+    oy = target.pos.y - this.pos.y;
     const angle = Math.atan2(oy, ox);
     return new Vector(Math.cos(angle), Math.sin(angle));
   }
