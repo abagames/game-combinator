@@ -1,14 +1,14 @@
 game-combinator ([Demo](https://abagames.github.io/game-combinator/))
 ======================
-Combine games and generate a new one. (Experimental, WIP)
+Combine games and generate a new one. (Experimental)
 
 ### How to work
 
 Combine the games randomly...
 
-[helmet](https://abagames.github.io/game-combinator/?v=1&g=helmet.gc) | [flap](https://abagames.github.io/game-combinator/?v=1&g=flap.gc)
---- | ---
-![helmet](https://abagames.github.io/game-combinator/img/helmet.gif) | ![flap](https://abagames.github.io/game-combinator/img/flap.gif)
+[helmet](https://abagames.github.io/game-combinator/?v=1&g=helmet.gc) | [flap](https://abagames.github.io/game-combinator/?v=1&g=flap.gc) | [...](https://github.com/abagames/game-combinator/tree/master/docs/codes)
+--- | --- | ---
+![helmet](https://abagames.github.io/game-combinator/img/helmet.gif) | ![flap](https://abagames.github.io/game-combinator/img/flap.gif) | ...
 
 ```
 (game helmet                                     (game flap
